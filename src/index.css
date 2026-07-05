@@ -1,0 +1,64 @@
+:root {
+  /* Cores — paleta "planta baixa" (blueprint) */
+  --bg: #0f2138;
+  --bg-grid-line: rgba(154, 186, 224, 0.08);
+  --panel: #16294a;
+  --panel-border: #2e4a72;
+  --ink: #edebe1;
+  --muted: #8fa3c0;
+  --accent: #f2622e; /* laranja de segurança */
+  --accent-soft: rgba(242, 98, 46, 0.14);
+  --measure: #e8b84b; /* amarelo trena, uso pontual */
+  --good: #6fbf8b;
+
+  /* Tipografia */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--measure);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
