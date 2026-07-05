@@ -31,9 +31,12 @@ body {
   margin: 0;
   background-color: var(--bg);
   background-image:
+    radial-gradient(circle at 15% 0%, rgba(242, 98, 46, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(79, 179, 255, 0.05), transparent 40%),
     linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
