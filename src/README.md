@@ -25,8 +25,6 @@ A aba precisa ter estas colunas, nessa ordem, com cabeçalho na primeira linha:
 > sensíveis, considere migrar futuramente para a API oficial do Google Sheets
 > com uma Service Account (posso te ajudar a implementar isso depois).
 
-https://docs.google.com/spreadsheets/d/e/2PACX-1vSMgJ-yfn3P-e_jsoJLsBnPKlr1ZJ6VW3eHaESU6gX4GS88lHCMQ47mE4IpSh2bNqWwVQ3_X7ttDpMl/pub?output=csv
-
 ## 3. Configurar o projeto localmente
 
 ```bash

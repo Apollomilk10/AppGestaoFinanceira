@@ -1,0 +1,264 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Title block — inspirado no carimbo de plantas técnicas */
+.title-block {
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 28px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.title-block__eyebrow {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.title-block__total {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  margin: 6px 0 2px;
+  line-height: 1;
+}
+
+.title-block__label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.title-block__meta {
+  display: flex;
+  gap: 24px;
+  border-left: 1px dashed var(--panel-border);
+  padding-left: 24px;
+}
+
+.title-block__meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-block__meta-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.title-block__meta-value {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Painéis genéricos */
+.panel {
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+
+.panel__title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .title-block {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.chart-tooltip {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+/* Linha de cota (dimension line) — elemento de assinatura */
+.budget-line__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--measure);
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.budget-line__form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.budget-line__form input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.primary-button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dimension__track {
+  position: relative;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dimension__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.dimension__ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dimension__tick {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.dimension__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+/* Tabela de lançamentos */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.recent-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 0 8px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.recent-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.align-right {
+  text-align: right;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding-top: 12px;
+}
+
+/* Tela de status (loading / erro) */
+.status-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 24px;
+}
+
+.status-screen__eyebrow {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.status-screen h1 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  max-width: 480px;
+}
