@@ -1,15 +1,18 @@
 :root {
-  /* Cores — paleta "planta baixa" (blueprint) */
-  --bg: #0f2138;
-  --bg-grid-line: rgba(154, 186, 224, 0.08);
-  --panel: #16294a;
-  --panel-border: #2e4a72;
-  --ink: #edebe1;
-  --muted: #8fa3c0;
-  --accent: #f2622e; /* laranja de segurança */
-  --accent-soft: rgba(242, 98, 46, 0.14);
-  --measure: #e8b84b; /* amarelo trena, uso pontual */
-  --good: #6fbf8b;
+  /* Cores — tema claro, preto e branco como base, cor só como acento pontual */
+  --bg: #f5f5f7;
+  --bg-grid-line: rgba(17, 17, 20, 0.035);
+  --panel: #ffffff;
+  --panel-border: #e8e8ea;
+  --ink: #111114;
+  --muted: #86868b;
+  --accent: #111114; /* preto — cor de marca, botões e destaques primários */
+  --accent-soft: rgba(17, 17, 20, 0.06);
+  --on-accent: #ffffff; /* texto sobre fundos pretos (botões) */
+  --measure: #111114; /* linhas de gráfico neutras */
+  --good: #1fa463; /* verde — abaixo do orçamento, queda de gasto */
+  --danger: #e1483d; /* vermelho — acima do orçamento, alta de gasto */
+  --danger-soft: rgba(225, 72, 61, 0.08);
 
   /* Tipografia */
   --font-display: 'Space Grotesk', sans-serif;
@@ -31,11 +34,9 @@ body {
   margin: 0;
   background-color: var(--bg);
   background-image:
-    radial-gradient(circle at 15% 0%, rgba(242, 98, 46, 0.06), transparent 40%),
-    radial-gradient(circle at 85% 10%, rgba(79, 179, 255, 0.05), transparent 40%),
     linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
-  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-size: 32px 32px;
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);

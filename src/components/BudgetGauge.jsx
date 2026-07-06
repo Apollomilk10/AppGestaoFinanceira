@@ -71,7 +71,7 @@ export default function BudgetGauge({ total }) {
             cy={SIZE / 2}
             r={RADIUS}
             fill="none"
-            stroke="rgba(255,255,255,0.08)"
+            stroke="rgba(17, 17, 20, 0.08)"
             strokeWidth={STROKE}
           />
           <circle
@@ -79,7 +79,7 @@ export default function BudgetGauge({ total }) {
             cy={SIZE / 2}
             r={RADIUS}
             fill="none"
-            stroke={over ? 'var(--accent)' : 'var(--good)'}
+            stroke={over ? 'var(--danger)' : 'var(--good)'}
             strokeWidth={STROKE}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
@@ -103,7 +103,7 @@ export default function BudgetGauge({ total }) {
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="rgba(255,255,255,0.15)"
+                stroke="rgba(17, 17, 20, 0.15)"
                 strokeWidth={1}
               />
             );
@@ -117,7 +117,7 @@ export default function BudgetGauge({ total }) {
 
       <div className="gauge-card__footer mono">
         <span>{formatBRL(total)} gasto</span>
-        <span className={over ? 'text-accent' : 'text-muted'}>
+        <span className={over ? 'text-danger' : 'text-muted'}>
           {over ? 'acima de ' : 'de '}
           {formatBRL(budget)}
         </span>

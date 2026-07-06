@@ -63,6 +63,11 @@ export async function fetchGastos() {
   return data
     .map((row, index) => ({
       id: index,
+      // Assume que a ordem do CSV publicado é a mesma da planilha (cabeçalho
+      // na linha 1, dados a partir da linha 2). Isso é usado para editar/
+      // excluir a linha certa via Apps Script. Evite reordenar/filtrar
+      // manualmente a aba na planilha, ou esse número pode ficar incorreto.
+      rowNumber: index + 2,
       data: parseDataBR(row.Data),
       categoria: (row.Categoria || 'Sem categoria').trim(),
       descricao: (row.Descricao || row['Descrição'] || '').trim(),

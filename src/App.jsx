@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchGastos } from './services/sheets';
+import { useAuth } from './hooks/useAuth';
+import LoginScreen from './components/LoginScreen';
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
 import TransactionsTab from './components/TransactionsTab';
 import InsightsTab from './components/InsightsTab';
+import ManageTab from './components/ManageTab';
 import NewExpenseForm from './components/NewExpenseForm';
 import './styles.css';
 
 const REFRESH_MS = 60_000;
 
 export default function App() {
+  const { isAuthenticated, login, logout } = useAuth();
+
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const [error, setError] = useState(null);
@@ -28,12 +33,17 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     load();
     const interval = setInterval(load, REFRESH_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const rowsMemo = useMemo(() => rows, [rows]);
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={login} />;
+  }
 
   if (status === 'loading') {
     return <StatusScreen title="Carregando dados da planilha…" />;
@@ -51,7 +61,12 @@ export default function App() {
   return (
     <div className="page">
       <header className="app-header">
-        <span className="mono eyebrow">OBRA — APARTAMENTO</span>
+        <div className="app-header__top">
+          <span className="mono eyebrow">OBRA — APARTAMENTO</span>
+          <button className="link-button mono" onClick={logout}>
+            sair
+          </button>
+        </div>
         <TabBar active={activeTab} onChange={setActiveTab} />
       </header>
 
@@ -62,6 +77,7 @@ export default function App() {
         <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
       )}
       {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
+      {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
       <footer className="footer mono">
         atualiza automaticamente a cada 60s · fonte: google sheets

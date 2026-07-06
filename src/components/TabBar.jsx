@@ -1,9 +1,10 @@
-import { LayoutGrid, List, TrendingUp } from 'lucide-react';
+import { LayoutGrid, List, TrendingUp, Settings2 } from 'lucide-react';
 
 const TABS = [
   { id: 'overview', label: 'Visão geral', icon: LayoutGrid },
   { id: 'transactions', label: 'Lançamentos', icon: List },
   { id: 'insights', label: 'Insights', icon: TrendingUp },
+  { id: 'manage', label: 'Gerenciar', icon: Settings2 },
 ];
 
 export default function TabBar({ active, onChange }) {

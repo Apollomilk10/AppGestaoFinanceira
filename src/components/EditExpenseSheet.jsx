@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { postGasto } from '../services/appsScript';
+import { updateGasto } from '../services/appsScript';
 
 const CATEGORIAS = [
   { value: 'material', label: 'Material' },
@@ -16,18 +16,16 @@ const ETAPAS = [
   { value: 'nao_especificada', label: 'Não especificada' },
 ];
 
-const initialState = {
-  valor: '',
-  categoria: 'material',
-  descricao: '',
-  etapa: 'nao_especificada',
-  responsavel: '',
-};
-
-export default function NewExpenseForm({ onSaved }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(initialState);
-  const [status, setStatus] = useState('idle'); // idle | saving | error
+export default function EditExpenseSheet({ row, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    valor: row.valor,
+    descricao: row.descricao,
+    categoria: row.categoria,
+    etapa: row.etapa,
+    responsavel: row.responsavel,
+    data: row.data ? row.data.toLocaleDateString('pt-BR') : '',
+  });
+  const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   function update(field, value) {
@@ -40,44 +38,25 @@ export default function NewExpenseForm({ onSaved }) {
 
     setStatus('saving');
     try {
-      await postGasto({
-        data: new Date().toLocaleDateString('pt-BR'),
-        categoria: form.categoria,
-        descricao: form.descricao,
+      await updateGasto(row.rowNumber, {
+        ...form,
         valor: Number(form.valor),
-        responsavel: form.responsavel,
-        etapa: form.etapa,
       });
-      setForm(initialState);
-      setOpen(false);
-      setStatus('idle');
       onSaved?.();
+      onClose();
     } catch (err) {
       console.error(err);
-      setErrorMessage(err.message || 'Erro desconhecido.');
+      setErrorMessage(err.message);
       setStatus('error');
     }
   }
 
-  if (!open) {
-    return (
-      <button className="fab" onClick={() => setOpen(true)} aria-label="Novo gasto">
-        <span className="fab__icon">+</span>
-        <span>Novo gasto</span>
-      </button>
-    );
-  }
-
   return (
-    <div className="sheet-backdrop" onClick={() => setOpen(false)}>
-      <form
-        className="sheet"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-      >
+    <div className="sheet-backdrop" onClick={onClose}>
+      <form className="sheet" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <div className="sheet__header">
-          <h2>Novo gasto</h2>
-          <button type="button" className="link-button mono" onClick={() => setOpen(false)}>
+          <h2>Editar gasto</h2>
+          <button type="button" className="link-button mono" onClick={onClose}>
             fechar
           </button>
         </div>
@@ -91,10 +70,8 @@ export default function NewExpenseForm({ onSaved }) {
               inputMode="decimal"
               min="0"
               step="0.01"
-              autoFocus
               value={form.valor}
               onChange={(e) => update('valor', e.target.value)}
-              placeholder="0,00"
               required
             />
           </div>
@@ -106,7 +83,6 @@ export default function NewExpenseForm({ onSaved }) {
             type="text"
             value={form.descricao}
             onChange={(e) => update('descricao', e.target.value)}
-            placeholder="ex: cimento, 5 sacos"
           />
         </label>
 
@@ -140,16 +116,13 @@ export default function NewExpenseForm({ onSaved }) {
             type="text"
             value={form.responsavel}
             onChange={(e) => update('responsavel', e.target.value)}
-            placeholder="seu nome"
           />
         </label>
 
-        {status === 'error' && (
-          <p className="field-error">{errorMessage || 'Não foi possível salvar. Tente novamente.'}</p>
-        )}
+        {status === 'error' && <p className="field-error">{errorMessage}</p>}
 
         <button type="submit" className="primary-button primary-button--full" disabled={status === 'saving'}>
-          {status === 'saving' ? 'salvando…' : 'salvar gasto'}
+          {status === 'saving' ? 'salvando…' : 'salvar alterações'}
         </button>
       </form>
     </div>

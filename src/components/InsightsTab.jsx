@@ -78,7 +78,7 @@ export default function InsightsTab({ rows }) {
           </div>
         </div>
         {comparacao.variacao !== null && (
-          <span className={`comparison-card__badge ${comparacao.variacao > 0 ? 'text-accent' : 'text-good'}`}>
+          <span className={`comparison-card__badge ${comparacao.variacao > 0 ? 'text-danger' : 'text-good'}`}>
             {comparacao.variacao > 0 ? '▲' : '▼'} {Math.abs(comparacao.variacao).toFixed(0)}%{' '}
             {comparacao.variacao > 0 ? 'a mais' : 'a menos'}
           </span>

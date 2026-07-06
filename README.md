@@ -1,10 +1,10 @@
 # Obra — Painel de Gastos
 
 Dashboard que lê os lançamentos de gastos da reforma direto de uma planilha
-Google Sheets e mostra indicadores básicos: total gasto, gasto por
-categoria, gasto por etapa da obra, orçamento previsto e últimos
-lançamentos. Tem um formulário embutido para adicionar novos gastos direto
-pelo site, sem custo.
+Google Sheets e mostra indicadores: total gasto, tendências, gasto por
+categoria, gasto por etapa, orçamento previsto, filtros e uma tela de
+gerenciamento para editar/excluir lançamentos. Tem login simples e um
+formulário embutido para adicionar novos gastos direto pelo site, sem custo.
 
 ## 1. Estrutura esperada da planilha
 
@@ -24,12 +24,10 @@ A aba precisa ter estas colunas, nessa ordem, com cabeçalho na primeira linha:
 > ⚠️ Esse link publicado fica acessível por qualquer pessoa que o tenha —
 > não é indexado pelo Google, mas não é criptografado.
 
-## 3. Ativar o botão "Novo gasto" (para *escrever* na planilha, sem custo)
+## 3. Configurar o Google Apps Script (para *escrever*, editar e excluir)
 
-O dashboard tem um formulário embutido (botão flutuante "+ Novo gasto") que
-grava lançamentos direto na planilha, sem precisar de bot, servidor ou API
-paga. Isso é feito com o **Google Apps Script**, um recurso gratuito do
-próprio Google Sheets.
+O dashboard grava, edita e exclui lançamentos direto na planilha usando o
+**Google Apps Script**, um recurso gratuito do próprio Google Sheets.
 
 1. Abra sua planilha no Google Sheets
 2. Vá em **Extensões > Apps Script**
@@ -42,70 +40,82 @@ próprio Google Sheets.
 7. Configure:
    - **Executar como**: sua conta
    - **Quem pode acessar**: Qualquer pessoa
-8. Clique em **Implantar** e autorize as permissões pedidas (é o próprio
-   Google pedindo confirmação de que o script pode editar essa planilha)
-9. Copie a **URL do app da Web** gerada
-10. Cole essa URL no `.env` do projeto, na variável `VITE_APPS_SCRIPT_URL`
+8. Clique em **Implantar** e autorize as permissões pedidas
+9. Copie a **URL do app da Web** gerada — ela deve terminar em `/exec`
+10. Cole essa URL no `.env`, na variável `VITE_APPS_SCRIPT_URL`
 
-> Sempre que você editar o código do `Code.gs`, precisa fazer
+> **Já tinha uma versão anterior do Code.gs?** É preciso substituir todo o
+> conteúdo do editor pelo novo código (ele agora suporta criar, editar e
+> excluir) e, depois de colar, fazer:
 > **Implantar > Gerenciar implantações > editar (ícone de lápis) > Nova versão**
-> para a mudança valer no link já gerado.
+>
+> Sem esse passo, o link continua rodando a versão antiga do script e as
+> ações de editar/excluir não vão funcionar.
 
-## 4. Configurar o projeto localmente
+## 4. Configurar o login
+
+O dashboard pede e-mail e senha antes de mostrar qualquer dado, e lembra o
+acesso no navegador depois do primeiro login.
+
+No `.env`, defina:
+
+```
+VITE_APP_EMAIL=voce@exemplo.com
+VITE_APP_PASSWORD=escolha-uma-senha
+```
+
+> ⚠️ **Limite importante de segurança**: como este é um site estático (sem
+> servidor próprio), essa senha fica embutida no código publicado. Isso
+> impede acesso casual de quem não conhece a senha, mas **não** é proteção
+> contra alguém disposto a inspecionar o código-fonte do site. Para um
+> controle de gastos doméstico costuma ser suficiente, mas não é segurança
+> de nível bancário.
+
+## 5. Configurar o projeto localmente
 
 \`\`\`bash
 npm install
 cp .env.example .env
-# cole os dois links (CSV e Apps Script) no .env
+# preencha as 4 variáveis no .env
 npm run dev
 \`\`\`
 
-O dashboard abre em \`http://localhost:5173\`, atualiza os dados
-automaticamente a cada 60 segundos, e já permite adicionar gastos pelo
-formulário.
+O dashboard abre em \`http://localhost:5173\`.
 
-## 5. Build de produção
+## 6. Build de produção
 
 \`\`\`bash
 npm run build
 \`\`\`
 
-Os arquivos finais ficam em \`dist/\`. Você pode hospedar em Vercel, Netlify,
-GitHub Pages ou qualquer serviço de arquivos estáticos.
+## 7. Publicar
 
-## 6. Criar o repositório no GitHub e publicar
+Se você já configurou o deploy pro GitHub Pages (`npm run deploy`), basta
+rodar esse comando de novo depois de qualquer mudança de código.
 
-1. Acesse [github.com/new](https://github.com/new)
-2. Nome sugerido: \`obra-dashboard\`
-3. Escolha a visibilidade (pública, se for usar GitHub Pages no plano gratuito)
-4. Crie o repositório **sem** README (este projeto já tem um)
-5. No terminal, dentro da pasta do projeto:
+## Diagnosticando erros ao salvar/editar/excluir
 
-\`\`\`bash
-git init
-git add .
-git commit -m "primeira versão do painel de gastos"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/obra-dashboard.git
-git push -u origin main
-\`\`\`
+O app agora mostra a mensagem de erro real (não mais um texto genérico).
+As causas mais comuns:
 
-6. Se o repositório for privado e você quiser dar acesso a alguém: vá em
-   **Settings > Collaborators > Add people** e digite o e-mail da pessoa —
-   se ela não tiver conta no GitHub, ele envia um convite automático
+- **"URL parece incorreta"**: confira se `VITE_APPS_SCRIPT_URL` termina em
+  `/exec`, não `/dev`
+- **"não retornou um JSON válido"**: falta publicar uma "Nova versão" da
+  implantação no Apps Script depois de editar o `Code.gs`
+- **"erro de rede/CORS"**: confira se a implantação está com acesso
+  "Qualquer pessoa" habilitado
 
 ## Sobre segurança
 
-O link do CSV e o link do Apps Script ficam embutidos no código publicado
-(visível em um repositório público ou inspecionando o site). Ninguém
-consegue *ler* a planilha inteira pelo link do Apps Script (ele só grava
-linhas), mas o link do CSV permite leitura completa por quem o descobrir.
-Para um controle de gastos doméstico isso costuma ser um risco aceitável,
-mas vale ter em mente.
+O link do CSV e o link do Apps Script ficam embutidos no código publicado.
+Ninguém consegue *ler* a planilha inteira pelo link do Apps Script (ele só
+grava/edita/exclui linhas), mas o link do CSV permite leitura completa por
+quem o descobrir. A senha de login também fica no código publicado — veja
+a seção 4 acima. Para um controle de gastos doméstico isso costuma ser um
+risco aceitável, mas vale ter em mente.
 
 ## Próximos passos possíveis
 
-- Adicionar uma senha simples de acesso ao site
-- Trocar o CSV publicado pela API oficial do Google Sheets com login (mais seguro, porém mais complexo)
-- Adicionar comparação mês a mês
-- Reaproveitar este mesmo formulário como alternativa ao bot do Telegram, ou usar os dois em paralelo
+- Adicionar um backend real com autenticação segura, se o projeto crescer
+- Trocar o CSV publicado pela API oficial do Google Sheets com login
+- Adicionar exportação de relatórios em PDF
