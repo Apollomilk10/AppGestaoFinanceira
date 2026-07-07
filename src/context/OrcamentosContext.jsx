@@ -10,9 +10,11 @@ export function OrcamentosProvider({ children }) {
   const [orcamentos, setOrcamentos] = useState([]);
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY) || '');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const reload = useCallback(async () => {
     if (!isAuthenticated) return;
+    setError('');
     try {
       const rows = await fetchOrcamentos({ email, token });
       setOrcamentos(rows);
@@ -25,7 +27,8 @@ export function OrcamentosProvider({ children }) {
         if (novo) localStorage.setItem(ACTIVE_KEY, novo);
         return novo;
       });
-    } catch {
+    } catch (err) {
+      setError(err.message);
       setLoading(false);
     }
   }, [email, token, isAuthenticated]);
@@ -60,6 +63,7 @@ export function OrcamentosProvider({ children }) {
     activeId,
     active,
     loading,
+    error,
     reload,
     switchOrcamento,
     criarOrcamento,

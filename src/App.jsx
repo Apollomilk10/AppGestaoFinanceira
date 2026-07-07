@@ -20,7 +20,7 @@ const REFRESH_MS = 60_000;
 
 export default function App() {
   const { isAuthenticated, email, token } = useAuth();
-  const { activeId, active, loading: orcamentosLoading } = useOrcamentos();
+  const { activeId, active, loading: orcamentosLoading, error: orcamentosError, reload: reloadOrcamentos } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
@@ -30,6 +30,16 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [travado, setTravado] = useState(false);
+
+  useEffect(() => {
+    if (!orcamentosLoading) {
+      setTravado(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => setTravado(true), 20000);
+    return () => clearTimeout(timeoutId);
+  }, [orcamentosLoading]);
 
   async function load() {
     if (!activeId) return;
@@ -59,7 +69,30 @@ export default function App() {
   }
 
   if (orcamentosLoading || (status === 'loading' && !activeId)) {
+    if (travado) {
+      return (
+        <StatusScreen
+          title="Isso está demorando mais que o esperado"
+          subtitle="Pode ser instabilidade no Apps Script. Tente recarregar a página."
+          isError
+        >
+          <button className="primary-button" onClick={() => window.location.reload()}>
+            Recarregar
+          </button>
+        </StatusScreen>
+      );
+    }
     return <StatusScreen title="Carregando seus orçamentos…" />;
+  }
+
+  if (orcamentosError) {
+    return (
+      <StatusScreen title="Não foi possível carregar seus orçamentos" subtitle={orcamentosError} isError>
+        <button className="primary-button" onClick={reloadOrcamentos}>
+          Tentar de novo
+        </button>
+      </StatusScreen>
+    );
   }
 
   if (!activeId) {
@@ -135,12 +168,13 @@ export default function App() {
   );
 }
 
-function StatusScreen({ title, subtitle, isError }) {
+function StatusScreen({ title, subtitle, isError, children }) {
   return (
     <div className="status-screen">
       <span className="mono status-screen__eyebrow">OBRA — PAINEL DE GASTOS</span>
       <h1 className={isError ? 'text-accent' : ''}>{title}</h1>
       {subtitle && <p className="text-muted">{subtitle}</p>}
+      {children}
     </div>
   );
 }

@@ -791,6 +791,10 @@
   max-width: 480px;
 }
 
+.status-screen .primary-button {
+  margin-top: 8px;
+}
+
 /* Tela de login */
 .login-screen {
   min-height: 100vh;
