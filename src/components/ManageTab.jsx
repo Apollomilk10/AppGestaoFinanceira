@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
+import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
 export default function ManageTab({ rows, onChanged }) {
+  const session = useAuth();
   const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const [editing, setEditing] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
@@ -18,7 +20,7 @@ export default function ManageTab({ rows, onChanged }) {
     setDeleting(true);
     setError('');
     try {
-      await deleteGasto(row.rowNumber);
+      await deleteGasto(row.rowNumber, session);
       setConfirmingId(null);
       onChanged?.();
     } catch (err) {
