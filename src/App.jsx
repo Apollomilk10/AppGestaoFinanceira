@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchGastos } from './services/sheets';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
@@ -15,7 +15,7 @@ import './styles.css';
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, userEmail, login, logout } = useAuth();
+  const { isAuthenticated, email, grupo, token, logout } = useAuth();
 
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
@@ -26,7 +26,7 @@ export default function App() {
 
   async function load() {
     try {
-      const data = await fetchGastos();
+      const data = await fetchGastos({ email, token });
       setRows(data);
       setStatus('ready');
     } catch (err) {
@@ -37,15 +37,17 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    setStatus('loading');
     load();
     const interval = setInterval(load, REFRESH_MS);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const rowsMemo = useMemo(() => rows, [rows]);
 
   if (!isAuthenticated) {
-    return <LoginScreen onLogin={login} />;
+    return <LoginScreen />;
   }
 
   if (status === 'loading') {
@@ -71,9 +73,9 @@ export default function App() {
     <div className="page">
       <header className="app-header">
         <div className="app-header__top">
-          <span className="mono eyebrow">OBRA — APARTAMENTO</span>
+          <span className="mono eyebrow">ESPAÇO {grupo}</span>
           <button className="link-button mono" onClick={logout}>
-            sair {userEmail ? `(${userEmail})` : ''}
+            sair ({email})
           </button>
         </div>
         <TabBar active={activeTab} onChange={setActiveTab} />

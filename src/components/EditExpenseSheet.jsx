@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { updateGasto } from '../services/appsScript';
+import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../context/CategoriesContext';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
 export default function EditExpenseSheet({ row, onClose, onSaved }) {
+  const session = useAuth();
   const { subcategoryOptions } = useCategories();
   const [form, setForm] = useState({
     valor: row.valor,
@@ -36,7 +38,7 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
       await updateGasto(row.rowNumber, {
         ...form,
         valor: Number(form.valor),
-      });
+      }, session);
       onSaved?.();
       onClose();
     } catch (err) {

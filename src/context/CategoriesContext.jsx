@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { fetchCustomCategories } from '../services/categoriesSheet';
 import { addCategoria as addCategoriaApi } from '../services/appsScript';
+import { useAuth } from './AuthContext';
 import {
   BUILTIN_CATEGORY_TREE,
   mergeCategoryTree,
@@ -15,14 +16,16 @@ import {
 const CategoriesContext = createContext(null);
 
 export function CategoriesProvider({ children }) {
+  const { email, token, isAuthenticated } = useAuth();
   const [tree, setTree] = useState(BUILTIN_CATEGORY_TREE);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    const custom = await fetchCustomCategories();
+    if (!isAuthenticated) return;
+    const custom = await fetchCustomCategories({ email, token });
     setTree(mergeCategoryTree(custom));
     setLoading(false);
-  }, []);
+  }, [email, token, isAuthenticated]);
 
   useEffect(() => {
     reload();
@@ -30,7 +33,10 @@ export function CategoriesProvider({ children }) {
 
   async function addCategory(categoriaLabel) {
     const categoriaChave = slugify(categoriaLabel);
-    await addCategoriaApi({ categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' });
+    await addCategoriaApi(
+      { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
+      { email, token }
+    );
     await reload();
     return categoriaChave;
   }
@@ -38,12 +44,15 @@ export function CategoriesProvider({ children }) {
   async function addSubcategory(categoriaChave, subcategoriaLabel) {
     const cat = tree[categoriaChave];
     const subcategoriaChave = slugify(subcategoriaLabel);
-    await addCategoriaApi({
-      categoriaChave,
-      categoriaLabel: cat?.label || categoriaChave,
-      subcategoriaChave,
-      subcategoriaLabel,
-    });
+    await addCategoriaApi(
+      {
+        categoriaChave,
+        categoriaLabel: cat?.label || categoriaChave,
+        subcategoriaChave,
+        subcategoriaLabel,
+      },
+      { email, token }
+    );
     await reload();
     return subcategoriaChave;
   }

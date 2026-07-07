@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { postGasto } from '../services/appsScript';
+import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../context/CategoriesContext';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
@@ -13,6 +14,7 @@ const initialState = {
 };
 
 export default function NewExpenseForm({ onSaved }) {
+  const session = useAuth();
   const { subcategoryOptions } = useCategories();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialState);
@@ -41,7 +43,7 @@ export default function NewExpenseForm({ onSaved }) {
         valor: Number(form.valor),
         responsavel: form.responsavel,
         etapa: form.etapa,
-      });
+      }, session);
       setForm(initialState);
       setOpen(false);
       setStatus('idle');
