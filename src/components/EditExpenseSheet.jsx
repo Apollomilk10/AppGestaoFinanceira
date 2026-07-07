@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { updateGasto } from '../services/appsScript';
 import { useAuth } from '../context/AuthContext';
+import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
 export default function EditExpenseSheet({ row, onClose, onSaved }) {
-  const session = useAuth();
+  const auth = useAuth();
+  const { activeId } = useOrcamentos();
+  const session = { ...auth, orcamentoId: activeId };
   const { subcategoryOptions } = useCategories();
   const [form, setForm] = useState({
     valor: row.valor,

@@ -13,6 +13,7 @@ import {
   currentVsPreviousMonth,
   rankBy,
   projecaoTotal,
+  cumulativeSeries,
 } from '../utils/insights';
 
 function CustomTooltip({ active, payload, label }) {
@@ -32,9 +33,38 @@ export default function InsightsTab({ rows }) {
   const porCategoria = rankBy(rows, 'categoria');
   const porEtapa = rankBy(rows, 'etapa');
   const projecao = projecaoTotal(rows);
+  const ritmo = cumulativeSeries(rows);
 
   return (
     <div className="tab-content">
+      {/* Ritmo de gastos (acumulado) */}
+      {ritmo.length > 1 && (
+        <div className="panel">
+          <h2 className="panel__title">Ritmo de gastos</h2>
+          <ResponsiveContainer width="100%" height={160}>
+            <AreaChart data={ritmo} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="ritmoFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--ink)" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="var(--ink)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                axisLine={{ stroke: 'var(--panel-border)' }}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis hide />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--panel-border)' }} />
+              <Area type="monotone" dataKey="total" stroke="var(--ink)" strokeWidth={2} fill="url(#ritmoFill)" />
+            </AreaChart>
+          </ResponsiveContainer>
+          <span className="text-muted" style={{ fontSize: 11 }}>total acumulado desde o primeiro lançamento</span>
+        </div>
+      )}
+
       {/* Tendência mensal */}
       <div className="panel">
         <h2 className="panel__title">Tendência dos últimos 6 meses</h2>

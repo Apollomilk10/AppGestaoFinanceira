@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Menu } from 'lucide-react';
 import { fetchGastos } from './services/sheets';
 import { useAuth } from './context/AuthContext';
+import { useOrcamentos } from './context/OrcamentosContext';
 import LoginScreen from './components/LoginScreen';
+import Sidebar from './components/Sidebar';
+import ProfileTab from './components/ProfileTab';
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
 import TransactionsTab from './components/TransactionsTab';
@@ -15,7 +19,8 @@ import './styles.css';
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, email, grupo, token, logout } = useAuth();
+  const { isAuthenticated, email, token } = useAuth();
+  const { activeId, active, loading: orcamentosLoading } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
@@ -23,10 +28,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [jumpCategoria, setJumpCategoria] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   async function load() {
+    if (!activeId) return;
     try {
-      const data = await fetchGastos({ email, token });
+      const data = await fetchGastos({ email, token, orcamentoId: activeId });
       setRows(data);
       setStatus('ready');
     } catch (err) {
@@ -36,13 +44,13 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !activeId) return;
     setStatus('loading');
     load();
     const interval = setInterval(load, REFRESH_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeId]);
 
   const rowsMemo = useMemo(() => rows, [rows]);
 
@@ -50,12 +58,25 @@ export default function App() {
     return <LoginScreen />;
   }
 
+  if (orcamentosLoading || (status === 'loading' && !activeId)) {
+    return <StatusScreen title="Carregando seus orçamentos…" />;
+  }
+
+  if (!activeId) {
+    return (
+      <StatusScreen
+        title="Você ainda não está em nenhum orçamento"
+        subtitle="Abra o menu lateral pra criar um novo ou entrar com um código."
+      />
+    );
+  }
+
   if (status === 'loading') {
-    return <StatusScreen title="Carregando dados da planilha…" />;
+    return <StatusScreen title="Carregando dados do orçamento…" />;
   }
 
   if (status === 'error') {
-    return <StatusScreen title="Não foi possível carregar a planilha" subtitle={error} isError />;
+    return <StatusScreen title="Não foi possível carregar os dados" subtitle={error} isError />;
   }
 
   function handleSelectCategory(categoriaKey) {
@@ -71,32 +92,45 @@ export default function App() {
 
   return (
     <div className="page">
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setShowProfile(true)}
+      />
+
       <header className="app-header">
         <div className="app-header__top">
-          <span className="mono eyebrow">ESPAÇO {grupo}</span>
-          <button className="link-button mono" onClick={logout}>
-            sair ({email})
+          <button className="icon-button" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+            <Menu size={18} />
           </button>
+          <span className="mono eyebrow">{active?.nome || 'ORÇAMENTO'}</span>
+          <span style={{ width: 32 }} />
         </div>
-        <TabBar active={activeTab} onChange={setActiveTab} />
+        {!showProfile && <TabBar active={activeTab} onChange={setActiveTab} />}
       </header>
 
-      {activeTab === 'overview' && (
-        <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} />
-      )}
-      {activeTab === 'transactions' && (
-        <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
-      )}
-      {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
-      {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
+      {showProfile ? (
+        <ProfileTab onBack={() => setShowProfile(false)} />
+      ) : (
+        <>
+          {activeTab === 'overview' && (
+            <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} />
+          )}
+          {activeTab === 'transactions' && (
+            <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
+          )}
+          {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
+          {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
-      <footer className="footer mono">
-        atualiza automaticamente a cada 60s · fonte: google sheets
-      </footer>
+          <footer className="footer mono">
+            atualiza automaticamente a cada 60s · fonte: google sheets
+          </footer>
 
-      <NewExpenseForm onSaved={load} />
-      <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
-      <FeedbackButton />
+          <NewExpenseForm onSaved={load} />
+          <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
+          <FeedbackButton />
+        </>
+      )}
     </div>
   );
 }

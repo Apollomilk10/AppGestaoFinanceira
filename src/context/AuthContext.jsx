@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
   async function login(email, senha, remember) {
     try {
       const result = await loginApi({ email, senha });
-      const sessionData = { email: result.email, grupo: result.grupo, token: result.token };
+      const sessionData = { email: result.email, token: result.token };
       persist(sessionData, remember);
       setSession(sessionData);
       return { ok: true };
@@ -34,13 +34,13 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signup(email, senha, modoGrupo, codigoGrupo, remember) {
+  async function signup(email, senha, modoGrupo, codigoGrupo, nomeOrcamento, remember) {
     try {
-      const result = await signupApi({ email, senha, modoGrupo, codigoGrupo });
-      const sessionData = { email: result.email, grupo: result.grupo, token: result.token };
+      const result = await signupApi({ email, senha, modoGrupo, codigoGrupo, nomeOrcamento });
+      const sessionData = { email: result.email, token: result.token };
       persist(sessionData, remember);
       setSession(sessionData);
-      return { ok: true, grupo: result.grupo };
+      return { ok: true, grupo: result.orcamentoId };
     } catch (err) {
       return { ok: false, message: err.message };
     }
@@ -55,7 +55,6 @@ export function AuthProvider({ children }) {
   const value = {
     isAuthenticated: !!session,
     email: session?.email || '',
-    grupo: session?.grupo || '',
     token: session?.token || '',
     login,
     signup,

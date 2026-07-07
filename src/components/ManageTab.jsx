@@ -3,11 +3,14 @@ import { Pencil, Trash2 } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
 import { useAuth } from '../context/AuthContext';
+import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
 export default function ManageTab({ rows, onChanged }) {
-  const session = useAuth();
+  const auth = useAuth();
+  const { activeId } = useOrcamentos();
+  const session = { ...auth, orcamentoId: activeId };
   const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const [editing, setEditing] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
