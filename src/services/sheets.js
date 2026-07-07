@@ -25,7 +25,7 @@ function parseDataBR(raw) {
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
-async function fetchComTimeout(payload, ms = 15000) {
+async function fetchComTimeout(payload, ms = 12000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ms);
   try {
@@ -37,12 +37,51 @@ async function fetchComTimeout(payload, ms = 15000) {
     });
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('O servidor demorou demais para responder (mais de 15s). Tente novamente.');
+      throw new Error('TIMEOUT');
     }
-    throw new Error('Não foi possível conectar ao servidor. Confira sua internet.');
+    throw new Error('REDE');
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+/**
+ * O Apps Script gratuito tem instabilidade intermitente conhecida. Por
+ * isso, leituras tentam de novo automaticamente antes de mostrar erro.
+ */
+async function callComRetry(payload, tentativas = 3) {
+  let ultimoErro;
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const response = await fetchComTimeout(payload);
+      if (!response.ok) {
+        throw new Error(`Falha ao buscar os gastos (status ${response.status}).`);
+      }
+      const rawText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        throw new Error('O Apps Script não retornou um JSON válido. Publique uma "Nova versão" da implantação.');
+      }
+      if (result.status !== 'ok') {
+        throw new Error(result.message || 'Erro ao buscar os gastos.');
+      }
+      return result;
+    } catch (err) {
+      ultimoErro = err;
+      if (err.message === 'TIMEOUT' || err.message === 'REDE') {
+        await new Promise((r) => setTimeout(r, 1200));
+        continue;
+      }
+      throw err;
+    }
+  }
+  const mensagem =
+    ultimoErro.message === 'TIMEOUT'
+      ? 'O servidor demorou demais pra responder, mesmo depois de tentar 3 vezes. O Apps Script gratuito às vezes fica instável — tente de novo em alguns segundos.'
+      : 'Não foi possível conectar ao servidor depois de 3 tentativas. Confira sua internet.';
+  throw new Error(mensagem);
 }
 
 export async function fetchGastos({ email, token, orcamentoId }) {
@@ -56,21 +95,7 @@ export async function fetchGastos({ email, token, orcamentoId }) {
     throw new Error('Nenhum orçamento selecionado.');
   }
 
-  const response = await fetchComTimeout({ action: 'listGastos', email, token, orcamentoId });
-  if (!response.ok) {
-    throw new Error(`Falha ao buscar os gastos (status ${response.status}).`);
-  }
-
-  const rawText = await response.text();
-  let result;
-  try {
-    result = JSON.parse(rawText);
-  } catch {
-    throw new Error('O Apps Script não retornou um JSON válido. Publique uma "Nova versão" da implantação.');
-  }
-  if (result.status !== 'ok') {
-    throw new Error(result.message || 'Erro ao buscar os gastos.');
-  }
+  const result = await callComRetry({ action: 'listGastos', email, token, orcamentoId });
 
   return result.rows
     .map((row, index) => ({
