@@ -31,15 +31,18 @@ function parseDataBR(raw) {
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
-export async function fetchGastos({ email, token }) {
+export async function fetchGastos({ email, token, orcamentoId }) {
   if (!SCRIPT_URL) {
     throw new Error('VITE_APPS_SCRIPT_URL não configurada. Veja o README para instruções.');
   }
   if (!email || !token) {
     throw new Error('Sessão inválida. Faça login novamente.');
   }
+  if (!orcamentoId) {
+    throw new Error('Nenhum orçamento selecionado.');
+  }
 
-  const url = `${SCRIPT_URL}?type=gastos&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+  const url = `${SCRIPT_URL}?type=gastos&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}&orcamentoId=${encodeURIComponent(orcamentoId)}`;
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`Falha ao buscar os gastos (status ${response.status}).`);

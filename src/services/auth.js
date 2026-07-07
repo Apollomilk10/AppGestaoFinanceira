@@ -32,8 +32,8 @@ async function callAuth(payload) {
   return result;
 }
 
-export function signup({ email, senha, modoGrupo, codigoGrupo }) {
-  return callAuth({ action: 'signup', email, senha, modoGrupo, codigoGrupo });
+export function signup({ email, senha, modoGrupo, codigoGrupo, nomeOrcamento }) {
+  return callAuth({ action: 'signup', email, senha, modoGrupo, codigoGrupo, nomeOrcamento });
 }
 
 export function login({ email, senha }) {

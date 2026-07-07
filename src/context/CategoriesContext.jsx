@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { fetchCustomCategories } from '../services/categoriesSheet';
 import { addCategoria as addCategoriaApi } from '../services/appsScript';
 import { useAuth } from './AuthContext';
+import { useOrcamentos } from './OrcamentosContext';
 import {
   BUILTIN_CATEGORY_TREE,
   mergeCategoryTree,
@@ -17,15 +18,16 @@ const CategoriesContext = createContext(null);
 
 export function CategoriesProvider({ children }) {
   const { email, token, isAuthenticated } = useAuth();
+  const { activeId } = useOrcamentos();
   const [tree, setTree] = useState(BUILTIN_CATEGORY_TREE);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    if (!isAuthenticated) return;
-    const custom = await fetchCustomCategories({ email, token });
+    if (!isAuthenticated || !activeId) return;
+    const custom = await fetchCustomCategories({ email, token, orcamentoId: activeId });
     setTree(mergeCategoryTree(custom));
     setLoading(false);
-  }, [email, token, isAuthenticated]);
+  }, [email, token, isAuthenticated, activeId]);
 
   useEffect(() => {
     reload();
@@ -35,7 +37,7 @@ export function CategoriesProvider({ children }) {
     const categoriaChave = slugify(categoriaLabel);
     await addCategoriaApi(
       { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
-      { email, token }
+      { email, token, orcamentoId: activeId }
     );
     await reload();
     return categoriaChave;
@@ -51,7 +53,7 @@ export function CategoriesProvider({ children }) {
         subcategoriaChave,
         subcategoriaLabel,
       },
-      { email, token }
+      { email, token, orcamentoId: activeId }
     );
     await reload();
     return subcategoriaChave;

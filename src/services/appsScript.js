@@ -46,15 +46,15 @@ async function callScript(payload) {
 }
 
 export function postGasto(gasto, session) {
-  return callScript({ action: 'create', ...gasto, email: session.email, token: session.token });
+  return callScript({ action: 'create', ...gasto, email: session.email, token: session.token, orcamentoId: session.orcamentoId });
 }
 
 export function updateGasto(rowNumber, gasto, session) {
-  return callScript({ action: 'update', rowNumber, ...gasto, email: session.email, token: session.token });
+  return callScript({ action: 'update', rowNumber, ...gasto, email: session.email, token: session.token, orcamentoId: session.orcamentoId });
 }
 
 export function deleteGasto(rowNumber, session) {
-  return callScript({ action: 'delete', rowNumber, email: session.email, token: session.token });
+  return callScript({ action: 'delete', rowNumber, email: session.email, token: session.token, orcamentoId: session.orcamentoId });
 }
 
 export function sendFeedback(mensagem, session) {
@@ -62,5 +62,5 @@ export function sendFeedback(mensagem, session) {
 }
 
 export function addCategoria(payload, session) {
-  return callScript({ action: 'addCategoria', ...payload, email: session.email, token: session.token });
+  return callScript({ action: 'addCategoria', ...payload, email: session.email, token: session.token, orcamentoId: session.orcamentoId });
 }

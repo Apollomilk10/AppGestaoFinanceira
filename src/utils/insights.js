@@ -98,3 +98,27 @@ export function projecaoTotal(rows, orcamento) {
 
   return { gastoMesAtual, mediaDiaria, projecaoMes };
 }
+
+/**
+ * Série acumulada (ritmo de gastos) — soma corrida do total gasto dia a
+ * dia, do primeiro lançamento até hoje. Ajuda a visualizar a velocidade
+ * com que o dinheiro está sendo gasto ao longo do tempo.
+ */
+export function cumulativeSeries(rows) {
+  const comData = rows.filter((r) => r.data).sort((a, b) => a.data.getTime() - b.data.getTime());
+  if (comData.length === 0) return [];
+
+  const porDia = new Map();
+  comData.forEach((r) => {
+    const key = r.data.toISOString().slice(0, 10);
+    porDia.set(key, (porDia.get(key) || 0) + r.valor);
+  });
+
+  let acumulado = 0;
+  return Array.from(porDia.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dateStr, total]) => {
+      acumulado += total;
+      return { label: new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), total: acumulado };
+    });
+}
