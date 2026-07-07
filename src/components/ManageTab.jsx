@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
-import { getCategoryMeta, getEtapaMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
 export default function ManageTab({ rows, onChanged }) {
+  const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const [editing, setEditing] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -43,7 +44,7 @@ export default function ManageTab({ rows, onChanged }) {
 
         {ordenadas.map((row) => {
           const catMeta = getCategoryMeta(row.categoria);
-          const etapaMeta = getEtapaMeta(row.etapa);
+          const subMeta = getSubcategoryMeta(row.categoria, row.etapa);
           const isConfirming = confirmingId === row.id;
 
           return (
@@ -52,7 +53,7 @@ export default function ManageTab({ rows, onChanged }) {
               <div className="manage-row__main">
                 <span className="manage-row__desc">{row.descricao || catMeta.label}</span>
                 <span className="manage-row__meta text-muted">
-                  {row.data ? row.data.toLocaleDateString('pt-BR') : 'sem data'} · {catMeta.label} · {etapaMeta.label}
+                  {row.data ? row.data.toLocaleDateString('pt-BR') : 'sem data'} · {catMeta.label} · {subMeta.label}
                 </span>
               </div>
               <span className="manage-row__valor mono">{formatBRL(row.valor)}</span>

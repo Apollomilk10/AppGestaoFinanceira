@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { getCategoryMeta, getEtapaMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 
 const PERIODOS = [
   { id: 'all', label: 'Tudo' },
@@ -20,6 +20,8 @@ export default function FilterBar({
   periodo,
   onPeriodo,
 }) {
+  const { getCategoryMeta, findSubcategoryMeta } = useCategories();
+
   return (
     <div className="filter-bar">
       <div className="search-input">
@@ -71,10 +73,10 @@ export default function FilterBar({
           className={`chip ${etapaAtiva === 'all' ? 'chip--active' : ''}`}
           onClick={() => onEtapa('all')}
         >
-          Todas etapas
+          Todas subcategorias
         </button>
         {etapas.map((et) => {
-          const meta = getEtapaMeta(et);
+          const meta = findSubcategoryMeta(et);
           return (
             <button
               key={et}

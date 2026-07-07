@@ -4,11 +4,12 @@ import { Lock } from 'lucide-react';
 export default function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
 
   function handleSubmit(e) {
     e.preventDefault();
-    const result = onLogin(email, password);
+    const result = onLogin(email, password, remember);
     if (!result.ok) {
       setError(result.message);
     }
@@ -47,6 +48,15 @@ export default function LoginScreen({ onLogin }) {
         </label>
 
         {error && <p className="field-error">{error}</p>}
+
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+          />
+          <span>Manter conectado neste dispositivo</span>
+        </label>
 
         <button type="submit" className="primary-button primary-button--full">
           Entrar

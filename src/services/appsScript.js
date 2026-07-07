@@ -74,3 +74,17 @@ export function updateGasto(rowNumber, gasto) {
 export function deleteGasto(rowNumber) {
   return callScript({ action: 'delete', rowNumber });
 }
+
+export function sendFeedback(mensagem) {
+  return callScript({ action: 'feedback', mensagem });
+}
+
+export function addCategoria({ categoriaChave, categoriaLabel, subcategoriaChave, subcategoriaLabel }) {
+  return callScript({
+    action: 'addCategoria',
+    categoriaChave,
+    categoriaLabel,
+    subcategoriaChave,
+    subcategoriaLabel,
+  });
+}

@@ -1,7 +1,8 @@
 import TagIcon from './TagIcon';
-import { getCategoryMeta, getEtapaMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 
 export default function TransactionList({ rows }) {
+  const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const groups = groupByDate(rows);
 
   if (rows.length === 0) {
@@ -22,14 +23,14 @@ export default function TransactionList({ rows }) {
           <div className="panel transaction-group__list">
             {items.map((row) => {
               const catMeta = getCategoryMeta(row.categoria);
-              const etapaMeta = getEtapaMeta(row.etapa);
+              const subMeta = getSubcategoryMeta(row.categoria, row.etapa);
               return (
                 <div key={row.id} className="transaction-row">
                   <TagIcon meta={catMeta} />
                   <div className="transaction-row__main">
                     <span className="transaction-row__desc">{row.descricao || catMeta.label}</span>
                     <span className="transaction-row__meta text-muted">
-                      {catMeta.label} · {etapaMeta.label}
+                      {catMeta.label} · {subMeta.label}
                       {row.responsavel ? ` · ${row.responsavel}` : ''}
                     </span>
                   </div>

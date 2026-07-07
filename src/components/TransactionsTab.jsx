@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import FilterBar from './FilterBar';
 import TransactionList from './TransactionList';
-import { getCategoryMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 
 export default function TransactionsTab({ rows, initialCategoria = 'all' }) {
+  const { getCategoryMeta } = useCategories();
   const [search, setSearch] = useState('');
   const [categoria, setCategoria] = useState(initialCategoria);
   const [etapa, setEtapa] = useState('all');
   const [periodo, setPeriodo] = useState('all');
 
   const categoriasDisponiveis = useMemo(
-    () => uniqueValues(rows, 'categoria'),
-    [rows]
+    () => uniqueValues(rows, 'categoria', getCategoryMeta),
+    [rows, getCategoryMeta]
   );
-  const etapasDisponiveis = useMemo(() => uniqueValues(rows, 'etapa'), [rows]);
+  const etapasDisponiveis = useMemo(() => uniqueValues(rows, 'etapa', getCategoryMeta), [rows, getCategoryMeta]);
 
   const filtradas = useMemo(() => {
     const agora = new Date();
@@ -35,7 +36,7 @@ export default function TransactionsTab({ rows, initialCategoria = 'all' }) {
         return true;
       })
       .sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
-  }, [rows, search, categoria, etapa, periodo]);
+  }, [rows, search, categoria, etapa, periodo, getCategoryMeta]);
 
   const totalFiltrado = filtradas.reduce((s, r) => s + r.valor, 0);
 
@@ -63,7 +64,7 @@ export default function TransactionsTab({ rows, initialCategoria = 'all' }) {
   );
 }
 
-function uniqueValues(rows, key) {
+function uniqueValues(rows, key, getCategoryMeta) {
   const set = new Set();
   rows.forEach((r) => {
     const v = key === 'categoria' ? getCategoryMeta(r[key]).key : (r[key] || 'nao_especificada').toLowerCase();

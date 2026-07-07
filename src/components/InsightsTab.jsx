@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import TagIcon from './TagIcon';
-import { getCategoryMeta, getEtapaMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 import {
   monthlySeries,
   currentVsPreviousMonth,
@@ -26,6 +26,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function InsightsTab({ rows }) {
+  const { getCategoryMeta, findSubcategoryMeta } = useCategories();
   const meses = monthlySeries(rows, 6);
   const comparacao = currentVsPreviousMonth(rows);
   const porCategoria = rankBy(rows, 'categoria');
@@ -116,12 +117,12 @@ export default function InsightsTab({ rows }) {
         </div>
       </div>
 
-      {/* Ranking por etapa */}
+      {/* Ranking por subcategoria */}
       <div className="panel">
-        <h2 className="panel__title">Ranking por etapa da obra</h2>
+        <h2 className="panel__title">Ranking por subcategoria</h2>
         <div className="rank-list">
           {porEtapa.map((item, i) => {
-            const meta = getEtapaMeta(item.key);
+            const meta = findSubcategoryMeta(item.key);
             return (
               <div key={item.key} className="rank-row">
                 <span className="rank-row__pos mono">{i + 1}</span>
