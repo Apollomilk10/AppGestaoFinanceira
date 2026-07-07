@@ -1,22 +1,11 @@
 import { useState } from 'react';
 import { updateGasto } from '../services/appsScript';
-
-const CATEGORIAS = [
-  { value: 'material', label: 'Material' },
-  { value: 'mao_de_obra', label: 'Mão de obra' },
-  { value: 'imprevisto', label: 'Imprevisto' },
-  { value: 'outro', label: 'Outro' },
-];
-
-const ETAPAS = [
-  { value: 'eletrica', label: 'Elétrica' },
-  { value: 'hidraulica', label: 'Hidráulica' },
-  { value: 'alvenaria', label: 'Alvenaria' },
-  { value: 'acabamento', label: 'Acabamento' },
-  { value: 'nao_especificada', label: 'Não especificada' },
-];
+import { useCategories } from '../context/CategoriesContext';
+import CategoryPicker from './CategoryPicker';
+import SubcategoryPicker from './SubcategoryPicker';
 
 export default function EditExpenseSheet({ row, onClose, onSaved }) {
+  const { subcategoryOptions } = useCategories();
   const [form, setForm] = useState({
     valor: row.valor,
     descricao: row.descricao,
@@ -30,6 +19,12 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleCategoriaChange(categoria) {
+    const options = subcategoryOptions(categoria);
+    const aindaValida = options.some((o) => o.value === form.etapa);
+    setForm((prev) => ({ ...prev, categoria, etapa: aindaValida ? prev.etapa : options[0]?.value || '' }));
   }
 
   async function handleSubmit(e) {
@@ -89,24 +84,16 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
         <div className="field-row">
           <label className="field">
             <span>Categoria</span>
-            <select value={form.categoria} onChange={(e) => update('categoria', e.target.value)}>
-              {CATEGORIAS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
           </label>
 
           <label className="field">
-            <span>Etapa</span>
-            <select value={form.etapa} onChange={(e) => update('etapa', e.target.value)}>
-              {ETAPAS.map((et) => (
-                <option key={et.value} value={et.value}>
-                  {et.label}
-                </option>
-              ))}
-            </select>
+            <span>Subcategoria</span>
+            <SubcategoryPicker
+              categoria={form.categoria}
+              value={form.etapa}
+              onChange={(v) => update('etapa', v)}
+            />
           </label>
         </div>
 

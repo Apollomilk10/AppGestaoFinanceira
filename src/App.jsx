@@ -8,18 +8,21 @@ import TransactionsTab from './components/TransactionsTab';
 import InsightsTab from './components/InsightsTab';
 import ManageTab from './components/ManageTab';
 import NewExpenseForm from './components/NewExpenseForm';
+import RefreshButton from './components/RefreshButton';
+import FeedbackButton from './components/FeedbackButton';
 import './styles.css';
 
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, userEmail, login, logout } = useAuth();
 
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [jumpCategoria, setJumpCategoria] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
 
   async function load() {
     try {
@@ -58,13 +61,19 @@ export default function App() {
     setActiveTab('transactions');
   }
 
+  async function handleForceRefresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
+
   return (
     <div className="page">
       <header className="app-header">
         <div className="app-header__top">
           <span className="mono eyebrow">OBRA — APARTAMENTO</span>
           <button className="link-button mono" onClick={logout}>
-            sair
+            sair {userEmail ? `(${userEmail})` : ''}
           </button>
         </div>
         <TabBar active={activeTab} onChange={setActiveTab} />
@@ -84,6 +93,8 @@ export default function App() {
       </footer>
 
       <NewExpenseForm onSaved={load} />
+      <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
+      <FeedbackButton />
     </div>
   );
 }

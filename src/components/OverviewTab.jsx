@@ -1,10 +1,11 @@
 import Sparkline from './Sparkline';
 import BudgetGauge from './BudgetGauge';
 import TagIcon from './TagIcon';
-import { getCategoryMeta } from '../utils/categoryMeta';
+import { useCategories } from '../context/CategoriesContext';
 import { last14DaysSeries, averageDaily, biggestExpense, rankBy } from '../utils/insights';
 
 export default function OverviewTab({ rows, onSelectCategory }) {
+  const { getCategoryMeta } = useCategories();
   const total = rows.reduce((sum, r) => sum + r.valor, 0);
   const series = last14DaysSeries(rows);
   const media = averageDaily(rows);
