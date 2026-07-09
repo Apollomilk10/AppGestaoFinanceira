@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { X, Plus, LogIn, Wallet, User, Trash2, Copy, Check } from 'lucide-react';
+import { X, Plus, LogIn, Wallet, Layers, User, Trash2, Copy, Check } from 'lucide-react';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ open, onClose, onOpenProfile }) {
-  const { orcamentos, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
+  const { orcamentos, filtroId, setFiltro, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
   const { uid } = useAuth();
   const [modo, setModo] = useState(null); // null | 'criar' | 'entrar'
   const [valor, setValor] = useState('');
@@ -57,40 +57,55 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
     setTimeout(() => setCopiadoId(''), 2000);
   }
 
+  function handleSelect(id) {
+    setFiltro(id);
+    onClose();
+  }
+
   return (
     <>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
       <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
         <div className="sidebar__header">
-          <span className="mono eyebrow">MEUS ORÇAMENTOS</span>
+          <span className="mono eyebrow">VER</span>
           <button className="icon-button" onClick={onClose} aria-label="Fechar menu">
             <X size={16} />
           </button>
         </div>
 
-        <p className="text-muted" style={{ fontSize: 12, margin: '-8px 0 0' }}>
-          "Meu espaço" mostra todos somados. Aqui você gerencia cada um.
-        </p>
-
         <div className="sidebar__list">
+          <button
+            className={`sidebar__item sidebar__item--clickable ${filtroId === '' ? 'sidebar__item--active' : ''}`}
+            onClick={() => handleSelect('')}
+          >
+            <Layers size={16} />
+            <span className="sidebar__item-name">Meu espaço (tudo)</span>
+            {filtroId === '' && <Check size={15} />}
+          </button>
+
           {orcamentos.map((orc) => {
             const souDono = orc.criadoPorUid === uid;
             const isConfirming = confirmingId === orc.id;
+            const isActive = filtroId === orc.id;
 
             return (
-              <div key={orc.id} className="sidebar__item">
-                <Wallet size={16} />
-                <div className="sidebar__item-main">
-                  <span className="sidebar__item-name">{orc.nome}</span>
-                  <button
-                    type="button"
-                    className="sidebar__item-code mono"
-                    onClick={() => copiarCodigo(orc.codigo)}
-                  >
-                    {copiadoId === orc.codigo ? <Check size={11} /> : <Copy size={11} />}
-                    {orc.codigo}
-                  </button>
-                </div>
+              <div key={orc.id} className={`sidebar__item ${isActive ? 'sidebar__item--active' : ''}`}>
+                <button
+                  type="button"
+                  className="sidebar__item--clickable sidebar__item-clickarea"
+                  onClick={() => handleSelect(orc.id)}
+                >
+                  <Wallet size={16} />
+                  <div className="sidebar__item-main">
+                    <span className="sidebar__item-name">{orc.nome}</span>
+                    <span className="sidebar__item-code mono" onClick={(e) => { e.stopPropagation(); copiarCodigo(orc.codigo); }}>
+                      {copiadoId === orc.codigo ? <Check size={11} /> : <Copy size={11} />}
+                      {orc.codigo}
+                    </span>
+                  </div>
+                </button>
+
+                {isActive && <Check size={15} className="sidebar__item-check" />}
 
                 {souDono && (
                   isConfirming ? (

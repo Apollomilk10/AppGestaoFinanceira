@@ -5,22 +5,22 @@ import { useCategories } from '../context/CategoriesContext';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
-function estadoInicial(orcamentos) {
+function estadoInicial(orcamentos, filtroId) {
   return {
     valor: '',
     categoria: 'obra_reforma',
     descricao: '',
     etapa: 'nao_especificada',
     responsavel: '',
-    orcamentoId: orcamentos[0]?.id || '',
+    orcamentoId: filtroId || orcamentos[0]?.id || '',
   };
 }
 
 export default function NewExpenseForm({ onSaved }) {
-  const { orcamentos } = useOrcamentos();
+  const { orcamentos, filtroId } = useOrcamentos();
   const { subcategoryOptions } = useCategories();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(() => estadoInicial(orcamentos));
+  const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId));
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -34,7 +34,7 @@ export default function NewExpenseForm({ onSaved }) {
   }
 
   function handleOpen() {
-    setForm(estadoInicial(orcamentos));
+    setForm(estadoInicial(orcamentos, filtroId));
     setOpen(true);
   }
 

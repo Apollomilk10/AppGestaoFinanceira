@@ -979,6 +979,37 @@
   font-size: 13.5px;
 }
 
+.sidebar__item--clickable {
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 8px;
+}
+
+.sidebar__item-clickarea {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.sidebar__item--active {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.sidebar__item-check {
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
 .sidebar__item-main {
   flex: 1;
   min-width: 0;

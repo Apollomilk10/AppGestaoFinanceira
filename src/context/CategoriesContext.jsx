@@ -31,7 +31,10 @@ export function CategoriesProvider({ children }) {
   }, [isAuthenticated, orcamentos.map((o) => o.id).join(',')]);
 
   useEffect(() => {
-    reload();
+    reload().catch((err) => {
+      console.error('Falha ao carregar categorias customizadas:', err);
+      setLoading(false);
+    });
   }, [reload]);
 
   // Novas categorias/subcategorias sempre entram no primeiro orçamento do

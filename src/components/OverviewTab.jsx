@@ -1,6 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Sparkline from './Sparkline';
-import BudgetGauge from './BudgetGauge';
 import TagIcon from './TagIcon';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -66,8 +65,6 @@ export default function OverviewTab({ rows, onSelectCategory }) {
           {maior && <span className="stat-card__sub">{maior.descricao}</span>}
         </div>
       </div>
-
-      <BudgetGauge total={total} />
 
       {/* Pizza por categoria */}
       {pieData.length > 0 && (

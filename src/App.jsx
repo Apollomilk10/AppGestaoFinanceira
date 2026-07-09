@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Menu, LogOut } from 'lucide-react';
-import { fetchGastosAgregados } from './services/sheets';
+import { fetchGastosAgregados, fetchGastosDeOrcamento } from './services/sheets';
 import { useAuth } from './context/AuthContext';
 import { useOrcamentos } from './context/OrcamentosContext';
 import LoginScreen from './components/LoginScreen';
@@ -25,6 +25,8 @@ export default function App() {
     loading: orcamentosLoading,
     error: orcamentosError,
     reload: reloadOrcamentos,
+    filtroId,
+    filtro,
   } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
@@ -49,7 +51,10 @@ export default function App() {
   async function load() {
     if (orcamentos.length === 0) return;
     try {
-      const data = await fetchGastosAgregados(orcamentos);
+      const data =
+        filtroId === ''
+          ? await fetchGastosAgregados(orcamentos)
+          : await fetchGastosDeOrcamento(filtro || orcamentos.find((o) => o.id === filtroId));
       setRows(data);
       setStatus('ready');
     } catch (err) {
@@ -65,7 +70,7 @@ export default function App() {
     const interval = setInterval(load, REFRESH_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, orcamentos.map((o) => o.id).join(',')]);
+  }, [isAuthenticated, orcamentos.map((o) => o.id).join(','), filtroId]);
 
   const rowsMemo = useMemo(() => rows, [rows]);
 
@@ -141,7 +146,9 @@ export default function App() {
           <button className="icon-button" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
             <Menu size={18} />
           </button>
-          <span className="mono eyebrow app-header__title">MEU ESPAÇO</span>
+          <span className="mono eyebrow app-header__title">
+            {filtroId === '' ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
+          </span>
           <div className="app-header__actions">
             <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
             <button className="icon-button" onClick={logout} aria-label="Sair">
