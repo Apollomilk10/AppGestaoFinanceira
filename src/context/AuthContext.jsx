@@ -72,6 +72,19 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function atualizarNome(novoNome) {
+    if (!auth.currentUser) return { ok: false, message: 'Sessão inválida.' };
+    try {
+      await updateProfile(auth.currentUser, { displayName: novoNome.trim() });
+      await auth.currentUser.getIdToken(true);
+      await apiPost('/perfil/nome', { nome: novoNome.trim() });
+      setUser({ ...auth.currentUser });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: err.message };
+    }
+  }
+
   function logout() {
     signOut(auth);
   }
@@ -85,6 +98,7 @@ export function AuthProvider({ children }) {
     login,
     signup,
     logout,
+    atualizarNome,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

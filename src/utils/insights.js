@@ -134,6 +134,33 @@ export function previsaoSaldoMes(rows) {
   };
 }
 
+/**
+ * Saldo acumulado dia a dia, do início do mês atual até hoje — usado no
+ * gráfico "Inicial / Saldo / Previsto" da Visão Geral.
+ */
+export function saldoDiarioMes(rows) {
+  const now = new Date();
+  const hoje = now.getDate();
+  const doMes = rows.filter(
+    (r) => r.data && r.data.getFullYear() === now.getFullYear() && r.data.getMonth() === now.getMonth()
+  );
+
+  const porDia = new Map();
+  doMes.forEach((r) => {
+    const dia = r.data.getDate();
+    const delta = r.tipo === 'receita' ? r.valor : -r.valor;
+    porDia.set(dia, (porDia.get(dia) || 0) + delta);
+  });
+
+  let acumulado = 0;
+  const serie = [];
+  for (let dia = 1; dia <= hoje; dia++) {
+    acumulado += porDia.get(dia) || 0;
+    serie.push({ label: `${String(dia).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`, total: acumulado });
+  }
+  return serie;
+}
+
 export function projecaoTotal(rows, orcamento) {
   const now = new Date();
   const diaDoMes = now.getDate();

@@ -6,6 +6,8 @@ import TagIcon from './TagIcon';
 import MetasPanel from './MetasPanel';
 import RecorrentesModal from './RecorrentesModal';
 import MemberBreakdown from './MemberBreakdown';
+import SaldoMensalChart from './SaldoMensalChart';
+import RecentTransactionsList from './RecentTransactionsList';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import {
@@ -18,6 +20,7 @@ import {
   filtrarDespesas,
   filtrarReceitas,
   saldoTotal,
+  saldoDiarioMes,
   previsaoSaldoMes,
 } from '../utils/insights';
 
@@ -56,40 +59,24 @@ export default function OverviewTab({ rows, onSelectCategory }) {
     return { name: meta.label, value: item.valor, color: meta.color };
   });
 
+  const serieMensal = saldoDiarioMes(rows);
+  const saldoInicial = 0;
+
   // orçamento pra recorrentes/metas: o filtrado, ou o único que a pessoa tem
   const orcamentoAlvo = filtroId || (orcamentos.length === 1 ? orcamentos[0].id : null);
 
   return (
     <div className="tab-content">
-      {/* Hero — saldo líquido (receitas - despesas) */}
-      <div className="panel hero-card">
-        <div className="hero-card__top">
-          <span className="mono eyebrow">SALDO — {saldo >= 0 ? 'POSITIVO' : 'NEGATIVO'}</span>
-          <h1 className={`hero-card__total ${saldo < 0 ? 'text-danger' : 'text-good'}`}>
-            {formatBRL(saldo)}
-          </h1>
-        </div>
-        <Sparkline data={series} />
-        <span className="hero-card__caption text-muted mono">
-          {formatBRL(totalReceitas)} em receitas · {formatBRL(totalDespesas)} em despesas
-        </span>
-      </div>
+      {/* Saldo mensal — Inicial / Saldo / Previsto */}
+      <SaldoMensalChart
+        serie={serieMensal}
+        saldoInicial={saldoInicial}
+        saldoAtual={saldo}
+        saldoPrevisto={previsao.saldoProjetado}
+      />
 
-      {/* Previsão do mês */}
-      <div className="panel saldo-card">
-        <h2 className="panel__title">Previsão de saldo do mês</h2>
-        <div className={`hero-card__total ${previsao.saldoProjetado < 0 ? 'text-danger' : 'text-good'}`} style={{ fontSize: 28 }}>
-          {formatBRL(previsao.saldoProjetado)}
-        </div>
-        <div className="saldo-card__linha text-muted">
-          <span>Receitas projetadas</span>
-          <span className="mono">{formatBRL(previsao.receitaProjetada)}</span>
-        </div>
-        <div className="saldo-card__linha text-muted">
-          <span>Despesas projetadas</span>
-          <span className="mono">{formatBRL(previsao.despesaProjetada)}</span>
-        </div>
-      </div>
+      {/* Últimas despesas */}
+      <RecentTransactionsList rows={despesas} />
 
       {/* Stats rápidos */}
       <div className="stat-row">
