@@ -24,6 +24,10 @@ db = firestore.client()
 
 def verify_token(id_token: str) -> dict:
     """Verifica o token do Firebase Auth enviado pelo front e retorna
-    os dados do usuário (uid, email)."""
+    os dados do usuário (uid, email, nome)."""
     decoded = auth.verify_id_token(id_token)
-    return {"uid": decoded["uid"], "email": decoded.get("email", "").lower()}
+    return {
+        "uid": decoded["uid"],
+        "email": decoded.get("email", "").lower(),
+        "name": decoded.get("name", "") or decoded.get("email", "").split("@")[0],
+    }

@@ -9,6 +9,7 @@ export default function LoginScreen() {
   const [modo, setModo] = useState('entrar'); // entrar | cadastrar
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [nome, setNome] = useState('');
   const [modoGrupo, setModoGrupo] = useState('criar'); // criar | entrar
   const [codigoGrupo, setCodigoGrupo] = useState('');
   const [remember, setRemember] = useState(true);
@@ -25,7 +26,7 @@ export default function LoginScreen() {
     const result =
       modo === 'entrar'
         ? await login(email, senha, remember)
-        : await signup(email, senha, modoGrupo, codigoGrupo, 'Meu espaço', remember);
+        : await signup(email, senha, nome, modoGrupo, codigoGrupo, 'Meu espaço', remember);
 
     setStatus('idle');
 
@@ -113,6 +114,19 @@ export default function LoginScreen() {
             autoFocus
           />
         </label>
+
+        {modo === 'cadastrar' && (
+          <label className="field">
+            <span>Seu nome</span>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="ex: Lucas"
+              required
+            />
+          </label>
+        )}
 
         <label className="field">
           <span>Senha</span>

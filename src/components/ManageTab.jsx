@@ -56,7 +56,9 @@ export default function ManageTab({ rows, onChanged }) {
                   {row.data ? row.data.toLocaleDateString('pt-BR') : 'sem data'} · {catMeta.label} · {subMeta.label}
                 </span>
               </div>
-              <span className="manage-row__valor mono">{formatBRL(row.valor)}</span>
+              <span className={`manage-row__valor mono ${row.tipo === 'receita' ? 'text-good' : 'text-danger'}`}>
+                {row.tipo === 'receita' ? '+' : '-'}{formatBRL(row.valor)}
+              </span>
 
               {isConfirming ? (
                 <div className="confirm-delete">

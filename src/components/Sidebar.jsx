@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, Plus, LogIn, Wallet, Layers, User, Users, Trash2, Copy, Check } from 'lucide-react';
+import { X, Plus, LogIn, Wallet, Layers, User, Users, Tags, Trash2, Copy, Check } from 'lucide-react';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useAuth } from '../context/AuthContext';
 import MembersModal from './MembersModal';
+import ManageCategoriesModal from './ManageCategoriesModal';
 
 export default function Sidebar({ open, onClose, onOpenProfile }) {
   const { orcamentos, filtroId, setFiltro, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
@@ -15,6 +16,7 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
   const [deletingId, setDeletingId] = useState(null);
   const [copiadoId, setCopiadoId] = useState('');
   const [vendoIntegrantes, setVendoIntegrantes] = useState(null);
+  const [vendoCategorias, setVendoCategorias] = useState(false);
 
   function fecharFormulario() {
     setModo(null);
@@ -193,12 +195,18 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
             <User size={16} />
             <span>Meu perfil</span>
           </button>
+          <button className="sidebar__action" onClick={() => setVendoCategorias(true)}>
+            <Tags size={16} />
+            <span>Gerenciar categorias</span>
+          </button>
         </div>
       </aside>
 
       {vendoIntegrantes && (
         <MembersModal orcamento={vendoIntegrantes} onClose={() => setVendoIntegrantes(null)} />
       )}
+
+      {vendoCategorias && <ManageCategoriesModal onClose={() => setVendoCategorias(false)} />}
     </>
   );
 }

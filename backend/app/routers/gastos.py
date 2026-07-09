@@ -20,7 +20,9 @@ def _serializar(doc) -> dict:
         "valor": data.get("valor", 0),
         "responsavel": data.get("responsavel", ""),
         "etapa": data.get("etapa", "nao_especificada"),
+        "tipo": data.get("tipo", "despesa"),
         "criadoPorEmail": data.get("criadoPorEmail", ""),
+        "criadoPorNome": data.get("criadoPorNome", data.get("criadoPorEmail", "")),
     }
 
 
@@ -48,8 +50,10 @@ async def criar_gasto(orcamento_id: str, body: GastoInput, user: dict = Depends(
         "valor": body.valor,
         "responsavel": body.responsavel,
         "etapa": body.etapa,
+        "tipo": body.tipo if body.tipo in ("despesa", "receita") else "despesa",
         "criadoPorUid": user["uid"],
         "criadoPorEmail": user["email"],
+        "criadoPorNome": user.get("name", user["email"]),
         "criadoEm": datetime.now(timezone.utc),
     })
     return {"status": "ok"}
@@ -79,6 +83,7 @@ async def atualizar_gasto(orcamento_id: str, gasto_id: str, body: GastoInput, us
         "valor": body.valor,
         "responsavel": body.responsavel,
         "etapa": body.etapa,
+        "tipo": body.tipo if body.tipo in ("despesa", "receita") else "despesa",
     })
     return {"status": "ok"}
 
@@ -94,6 +99,29 @@ async def excluir_gasto(orcamento_id: str, gasto_id: str, user: dict = Depends(g
 
     ref.delete()
     return {"status": "ok"}
+
+
+@router.get("/orcamentos/{orcamento_id}/por-integrante")
+async def gastos_por_integrante(orcamento_id: str, user: dict = Depends(get_current_user)):
+    await exigir_membro(orcamento_id, user["uid"])
+    docs = db.collection("gastos").where("orcamentoId", "==", orcamento_id).stream()
+
+    resumo = {}
+    for d in docs:
+        data = d.to_dict()
+        uid = data.get("criadoPorUid") or "desconhecido"
+        nome = data.get("criadoPorNome") or data.get("criadoPorEmail") or "Desconhecido"
+        valor = data.get("valor", 0)
+        tipo = data.get("tipo", "despesa")
+
+        if uid not in resumo:
+            resumo[uid] = {"uid": uid, "nome": nome, "despesas": 0, "receitas": 0}
+        if tipo == "receita":
+            resumo[uid]["receitas"] += valor
+        else:
+            resumo[uid]["despesas"] += valor
+
+    return {"rows": list(resumo.values())}
 
 
 @router.get("/meus-gastos")
@@ -115,6 +143,7 @@ async def meus_gastos(user: dict = Depends(get_current_user)):
             "categoria": data.get("categoria", "outro"),
             "descricao": data.get("descricao", ""),
             "valor": data.get("valor", 0),
+            "tipo": data.get("tipo", "despesa"),
             "orcamentoId": orcamento_id,
             "orcamentoNome": orcamento_nomes[orcamento_id],
         })

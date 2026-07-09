@@ -111,6 +111,192 @@
   color: var(--ink);
 }
 
+.panel__header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.panel__header-row .panel__title {
+  margin: 0;
+}
+
+.inline-add--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.inline-add--stack input,
+.inline-add--stack select {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.metas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.meta-card {
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meta-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-card__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.meta-card__nome {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.meta-card__track {
+  height: 6px;
+  background: rgba(17, 17, 20, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.meta-card__fill {
+  height: 100%;
+  background: var(--good);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.meta-card__valores {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+
+.meta-card__aportar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.alerta-vencimento {
+  display: flex;
+  gap: 10px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--danger);
+  margin-bottom: 4px;
+}
+
+.alerta-vencimento__item {
+  font-size: 12.5px;
+}
+
+.alerta-vencimento__item + .alerta-vencimento__item {
+  margin-top: 4px;
+}
+
+.recorrentes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.recorrentes-list__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(17, 17, 20, 0.06);
+}
+
+.recorrentes-list__row:last-child {
+  border-bottom: none;
+}
+
+.recorrentes-list__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recorrentes-list__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.recorrentes-list__desc {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saldo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.saldo-card__linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.recorrentes-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
 .link-button {
   background: none;
   border: none;
@@ -915,6 +1101,39 @@
 .mode-toggle--small button {
   font-size: 12px;
   padding: 6px;
+}
+
+.tipo-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.tipo-toggle__option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tipo-toggle__option--active.tipo-toggle__option--despesa {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.tipo-toggle__option--active.tipo-toggle__option--receita {
+  background: rgba(31, 164, 99, 0.1);
+  border-color: var(--good);
+  color: var(--good);
 }
 
 .grupo-code {

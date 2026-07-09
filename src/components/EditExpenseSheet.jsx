@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { updateGasto } from '../services/appsScript';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -10,6 +11,7 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
   const { subcategoryOptions } = useCategories();
   const { orcamentos } = useOrcamentos();
   const [form, setForm] = useState({
+    tipo: row.tipo || 'despesa',
     valor: row.valor,
     descricao: row.descricao,
     categoria: row.categoria,
@@ -48,6 +50,7 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
           valor: Number(form.valor),
           responsavel: form.responsavel,
           etapa: form.etapa,
+          tipo: form.tipo,
           ...(mudouOrcamento ? { novoOrcamentoId: form.orcamentoId } : {}),
         },
         { orcamentoId: row.orcamentoId }
@@ -65,9 +68,28 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
     <div className="sheet-backdrop" onClick={onClose}>
       <form className="sheet" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <div className="sheet__header">
-          <h2>Editar gasto</h2>
+          <h2>Editar lançamento</h2>
           <button type="button" className="link-button mono" onClick={onClose}>
             fechar
+          </button>
+        </div>
+
+        <div className="tipo-toggle">
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => update('tipo', 'despesa')}
+          >
+            <ArrowDownCircle size={15} />
+            Despesa
+          </button>
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => update('tipo', 'receita')}
+          >
+            <ArrowUpCircle size={15} />
+            Receita
           </button>
         </div>
 
@@ -109,31 +131,33 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
           />
         </label>
 
-        <div className="field-row">
-          <label className="field">
-            <span>Categoria</span>
-            <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
-          </label>
+        {form.tipo === 'despesa' && (
+          <div className="field-row">
+            <label className="field">
+              <span>Categoria</span>
+              <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
+            </label>
 
-          <label className="field">
-            <span>Subcategoria</span>
-            <SubcategoryPicker
-              categoria={form.categoria}
-              value={form.etapa}
-              onChange={(v) => update('etapa', v)}
-            />
-          </label>
-        </div>
+            <label className="field">
+              <span>Subcategoria</span>
+              <SubcategoryPicker
+                categoria={form.categoria}
+                value={form.etapa}
+                onChange={(v) => update('etapa', v)}
+              />
+            </label>
+          </div>
+        )}
 
         <label className="field">
           <span>Quem</span>
           <select value={form.responsavel} onChange={(e) => update('responsavel', e.target.value)}>
-            {form.responsavel && !membros.some((m) => m.email === form.responsavel) && (
+            {form.responsavel && !membros.some((m) => m.nome === form.responsavel) && (
               <option value={form.responsavel}>{form.responsavel}</option>
             )}
             {membros.map((m) => (
-              <option key={m.uid} value={m.email}>
-                {m.email}
+              <option key={m.uid} value={m.nome}>
+                {m.nome}
               </option>
             ))}
           </select>

@@ -1,4 +1,4 @@
-import { apiPost, apiPut, apiDelete } from './api';
+import { apiGet, apiPost, apiPut, apiDelete } from './api';
 
 export function postGasto(gasto, session) {
   return apiPost(`/orcamentos/${session.orcamentoId}/gastos`, gasto);
@@ -18,4 +18,13 @@ export function sendFeedback(mensagem) {
 
 export function addCategoria(payload, session) {
   return apiPost(`/orcamentos/${session.orcamentoId}/categorias`, payload);
+}
+
+export function deleteCategoria(orcamentoId, categoriaId) {
+  return apiDelete(`/orcamentos/${orcamentoId}/categorias/${categoriaId}`);
+}
+
+export async function fetchPorIntegrante(orcamentoId) {
+  const result = await apiGet(`/orcamentos/${orcamentoId}/por-integrante`);
+  return result.rows;
 }

@@ -34,7 +34,9 @@ export default function TransactionList({ rows }) {
                       {row.responsavel ? ` · ${row.responsavel}` : ''}
                     </span>
                   </div>
-                  <span className="transaction-row__valor mono">{formatBRL(row.valor)}</span>
+                  <span className={`transaction-row__valor mono ${row.tipo === 'receita' ? 'text-good' : 'text-danger'}`}>
+                    {row.tipo === 'receita' ? '+' : '-'}{formatBRL(row.valor)}
+                  </span>
                 </div>
               );
             })}

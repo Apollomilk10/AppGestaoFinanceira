@@ -30,6 +30,7 @@ async def criar_orcamento(body: CriarOrcamento, user: dict = Depends(get_current
         "orcamentoId": orcamento_ref.id,
         "uid": user["uid"],
         "email": user["email"],
+        "nome": user.get("name", user["email"]),
         "dataEntrada": datetime.now(timezone.utc),
     })
 
@@ -49,6 +50,7 @@ async def entrar_orcamento(body: EntrarOrcamento, user: dict = Depends(get_curre
         "orcamentoId": orcamento_id,
         "uid": user["uid"],
         "email": user["email"],
+        "nome": user.get("name", user["email"]),
         "dataEntrada": datetime.now(timezone.utc),
     })
 
@@ -79,7 +81,11 @@ async def listar_membros(orcamento_id: str, user: dict = Depends(get_current_use
     await exigir_membro(orcamento_id, user["uid"])
     docs = db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()
     resultado = [
-        {"uid": d.to_dict().get("uid"), "email": d.to_dict().get("email")}
+        {
+            "uid": d.to_dict().get("uid"),
+            "email": d.to_dict().get("email"),
+            "nome": d.to_dict().get("nome") or d.to_dict().get("email"),
+        }
         for d in docs
     ]
     return {"rows": resultado}
@@ -95,8 +101,8 @@ async def excluir_orcamento(orcamento_id: str, user: dict = Depends(get_current_
     if doc.to_dict().get("criadoPorUid") != user["uid"]:
         raise HTTPException(status_code=403, detail="Só quem criou o orçamento pode excluí-lo.")
 
-    # Limpeza em cascata: gastos, categorias e membros desse orçamento
-    for colecao in ("gastos", "categorias"):
+    # Limpeza em cascata: gastos, categorias, metas, recorrentes e membros
+    for colecao in ("gastos", "categorias", "metas", "recorrentes"):
         docs = db.collection(colecao).where("orcamentoId", "==", orcamento_id).stream()
         for d in docs:
             d.reference.delete()

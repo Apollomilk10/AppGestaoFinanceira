@@ -85,6 +85,55 @@ export function rankBy(rows, key) {
   })).sort((a, b) => b.valor - a.valor);
 }
 
+// ===================== DESPESAS x RECEITAS =====================
+
+export function filtrarDespesas(rows) {
+  return rows.filter((r) => r.tipo !== 'receita');
+}
+
+export function filtrarReceitas(rows) {
+  return rows.filter((r) => r.tipo === 'receita');
+}
+
+/**
+ * Saldo líquido: receitas menos despesas.
+ */
+export function saldoTotal(rows) {
+  return rows.reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0);
+}
+
+/**
+ * Projeta o saldo (receitas - despesas) no fim do mês atual, com base no
+ * ritmo médio diário de receitas e despesas até agora.
+ */
+export function previsaoSaldoMes(rows) {
+  const now = new Date();
+  const diaDoMes = now.getDate();
+  const diasNoMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+  const doMes = rows.filter(
+    (r) => r.data && r.data.getFullYear() === now.getFullYear() && r.data.getMonth() === now.getMonth()
+  );
+
+  const despesasMes = doMes.filter((r) => r.tipo !== 'receita').reduce((s, r) => s + r.valor, 0);
+  const receitasMes = doMes.filter((r) => r.tipo === 'receita').reduce((s, r) => s + r.valor, 0);
+
+  const mediaDespesaDiaria = diaDoMes > 0 ? despesasMes / diaDoMes : 0;
+  const mediaReceitaDiaria = diaDoMes > 0 ? receitasMes / diaDoMes : 0;
+
+  const despesaProjetada = mediaDespesaDiaria * diasNoMes;
+  const receitaProjetada = mediaReceitaDiaria * diasNoMes;
+
+  return {
+    despesasMes,
+    receitasMes,
+    saldoAtual: receitasMes - despesasMes,
+    saldoProjetado: receitaProjetada - despesaProjetada,
+    despesaProjetada,
+    receitaProjetada,
+  };
+}
+
 export function projecaoTotal(rows, orcamento) {
   const now = new Date();
   const diaDoMes = now.getDate();

@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import orcamentos, gastos, categorias, feedback
+from .routers import orcamentos, gastos, categorias, feedback, metas, recorrentes
 
 app = FastAPI(title="Obra — API de Gastos")
 
@@ -25,6 +25,8 @@ app.include_router(orcamentos.router)
 app.include_router(gastos.router)
 app.include_router(categorias.router)
 app.include_router(feedback.router)
+app.include_router(metas.router)
+app.include_router(recorrentes.router)
 
 
 @app.get("/")

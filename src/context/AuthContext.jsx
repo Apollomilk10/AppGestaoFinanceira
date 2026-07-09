@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
@@ -48,10 +49,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signup(email, senha, modoGrupo, codigoGrupo, nomeOrcamento, remember) {
+  async function signup(email, senha, nome, modoGrupo, codigoGrupo, nomeOrcamento, remember) {
     try {
       await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-      await createUserWithEmailAndPassword(auth, email.trim(), senha);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), senha);
+      await updateProfile(cred.user, { displayName: nome.trim() });
+      await cred.user.getIdToken(true); // força o token a incluir o nome já
 
       // Cria ou entra no orçamento depois que a conta já existe
       const result =
@@ -78,6 +81,7 @@ export function AuthProvider({ children }) {
     initializing,
     email: user?.email || '',
     uid: user?.uid || '',
+    nome: user?.displayName || user?.email || '',
     login,
     signup,
     logout,

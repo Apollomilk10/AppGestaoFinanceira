@@ -1,4 +1,4 @@
-import { apiGet } from './api';
+import { apiGet, apiPost } from './api';
 
 function parseDataBR(raw) {
   if (!raw) return null;
@@ -14,6 +14,14 @@ function parseDataBR(raw) {
 }
 
 export async function fetchGastosDeOrcamento(orcamento) {
+  // Materializa lançamentos de contas recorrentes do mês atual, se ainda
+  // não tiverem sido gerados — silencioso, não bloqueia a leitura se falhar.
+  try {
+    await apiPost(`/orcamentos/${orcamento.id}/recorrentes/processar`, {});
+  } catch {
+    // segue sem travar a leitura dos gastos
+  }
+
   const result = await apiGet(`/orcamentos/${orcamento.id}/gastos`);
 
   return result.rows
@@ -28,6 +36,8 @@ export async function fetchGastosDeOrcamento(orcamento) {
       valor: Number(row.valor) || 0,
       responsavel: (row.responsavel || '').toString().trim(),
       etapa: (row.etapa || 'Sem etapa').toString().trim(),
+      tipo: row.tipo === 'receita' ? 'receita' : 'despesa',
+      criadoPorNome: (row.criadoPorNome || row.criadoPorEmail || '').toString().trim(),
     }))
     .filter((row) => row.valor > 0 || row.descricao);
 }

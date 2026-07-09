@@ -1,29 +1,33 @@
 import { useState } from 'react';
+import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { postGasto } from '../services/appsScript';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { useAuth } from '../context/AuthContext';
 import { useMembros } from '../hooks/useMembros';
+import { sugerirCategoria } from '../utils/autoCategorize';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
-function estadoInicial(orcamentos, filtroId, email) {
+function estadoInicial(orcamentos, filtroId, nome) {
   return {
+    tipo: 'despesa',
     valor: '',
     categoria: 'obra_reforma',
     descricao: '',
     etapa: 'nao_especificada',
-    responsavel: email || '',
+    responsavel: nome || '',
     orcamentoId: filtroId || orcamentos[0]?.id || '',
+    sugestaoAplicada: false,
   };
 }
 
 export default function NewExpenseForm({ onSaved }) {
   const { orcamentos, filtroId } = useOrcamentos();
-  const { email } = useAuth();
+  const { nome } = useAuth();
   const { subcategoryOptions } = useCategories();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId, email));
+  const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId, nome));
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [errorMessage, setErrorMessage] = useState('');
   const { membros } = useMembros(form.orcamentoId);
@@ -37,8 +41,20 @@ export default function NewExpenseForm({ onSaved }) {
     setForm((prev) => ({ ...prev, categoria, etapa: options[0]?.value || '' }));
   }
 
+  function handleDescricaoChange(descricao) {
+    setForm((prev) => {
+      // só sugere automaticamente se a pessoa ainda não mexeu na categoria
+      if (prev.sugestaoAplicada || prev.tipo === 'receita') {
+        return { ...prev, descricao };
+      }
+      const sugestao = sugerirCategoria(descricao);
+      if (!sugestao) return { ...prev, descricao };
+      return { ...prev, descricao, categoria: sugestao.categoria, etapa: sugestao.etapa };
+    });
+  }
+
   function handleOpen() {
-    setForm(estadoInicial(orcamentos, filtroId, email));
+    setForm(estadoInicial(orcamentos, filtroId, nome));
     setOpen(true);
   }
 
@@ -61,6 +77,7 @@ export default function NewExpenseForm({ onSaved }) {
           valor: Number(form.valor),
           responsavel: form.responsavel,
           etapa: form.etapa,
+          tipo: form.tipo,
         },
         { orcamentoId: form.orcamentoId }
       );
@@ -76,9 +93,9 @@ export default function NewExpenseForm({ onSaved }) {
 
   if (!open) {
     return (
-      <button className="fab" onClick={handleOpen} aria-label="Novo gasto">
+      <button className="fab" onClick={handleOpen} aria-label="Novo lançamento">
         <span className="fab__icon">+</span>
-        <span>Novo gasto</span>
+        <span>Novo lançamento</span>
       </button>
     );
   }
@@ -87,9 +104,28 @@ export default function NewExpenseForm({ onSaved }) {
     <div className="sheet-backdrop" onClick={() => setOpen(false)}>
       <form className="sheet" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <div className="sheet__header">
-          <h2>Novo gasto</h2>
+          <h2>Novo lançamento</h2>
           <button type="button" className="link-button mono" onClick={() => setOpen(false)}>
             fechar
+          </button>
+        </div>
+
+        <div className="tipo-toggle">
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => update('tipo', 'despesa')}
+          >
+            <ArrowDownCircle size={15} />
+            Despesa
+          </button>
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => update('tipo', 'receita')}
+          >
+            <ArrowUpCircle size={15} />
+            Receita
           </button>
         </div>
 
@@ -129,30 +165,38 @@ export default function NewExpenseForm({ onSaved }) {
           <input
             type="text"
             value={form.descricao}
-            onChange={(e) => update('descricao', e.target.value)}
+            onChange={(e) => handleDescricaoChange(e.target.value)}
             placeholder="ex: cimento, 5 sacos"
           />
         </label>
 
-        <div className="field-row">
-          <label className="field">
-            <span>Categoria</span>
-            <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
-          </label>
+        {form.tipo === 'despesa' && (
+          <div className="field-row">
+            <label className="field">
+              <span>Categoria</span>
+              <CategoryPicker
+                value={form.categoria}
+                onChange={(v) => {
+                  update('sugestaoAplicada', true);
+                  handleCategoriaChange(v);
+                }}
+              />
+            </label>
 
-          <label className="field">
-            <span>Subcategoria</span>
-            <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
-          </label>
-        </div>
+            <label className="field">
+              <span>Subcategoria</span>
+              <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
+            </label>
+          </div>
+        )}
 
         <label className="field">
           <span>Quem</span>
           <select value={form.responsavel} onChange={(e) => update('responsavel', e.target.value)}>
-            {membros.length === 0 && email && <option value={email}>{email}</option>}
+            {membros.length === 0 && nome && <option value={nome}>{nome}</option>}
             {membros.map((m) => (
-              <option key={m.uid} value={m.email}>
-                {m.email}
+              <option key={m.uid} value={m.nome}>
+                {m.nome}
               </option>
             ))}
           </select>
@@ -163,7 +207,7 @@ export default function NewExpenseForm({ onSaved }) {
         )}
 
         <button type="submit" className="primary-button primary-button--full" disabled={status === 'saving'}>
-          {status === 'saving' ? 'salvando…' : 'salvar gasto'}
+          {status === 'saving' ? 'salvando…' : 'salvar'}
         </button>
       </form>
     </div>
