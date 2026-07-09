@@ -21,3 +21,8 @@ export async function fetchMeusGastos() {
   const result = await apiGet('/meus-gastos');
   return result.rows;
 }
+
+export async function fetchMembros(orcamentoId) {
+  const result = await apiGet(`/orcamentos/${orcamentoId}/membros`);
+  return result.rows;
+}

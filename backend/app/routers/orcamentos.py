@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import get_current_user
-from ..data import gerar_codigo, buscar_orcamento_por_codigo, membro_doc_id
+from ..data import gerar_codigo, buscar_orcamento_por_codigo, membro_doc_id, exigir_membro
 from ..firebase import db
 from ..models import CriarOrcamento, EntrarOrcamento
 
@@ -71,6 +71,17 @@ async def listar_meus_orcamentos(user: dict = Depends(get_current_user)):
                 "codigo": data.get("codigo"),
                 "criadoPorUid": data.get("criadoPorUid"),
             })
+    return {"rows": resultado}
+
+
+@router.get("/{orcamento_id}/membros")
+async def listar_membros(orcamento_id: str, user: dict = Depends(get_current_user)):
+    await exigir_membro(orcamento_id, user["uid"])
+    docs = db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()
+    resultado = [
+        {"uid": d.to_dict().get("uid"), "email": d.to_dict().get("email")}
+        for d in docs
+    ]
     return {"rows": resultado}
 
 

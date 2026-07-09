@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, Sun, Moon } from 'lucide-react';
 import { fetchGastosAgregados, fetchGastosDeOrcamento } from './services/sheets';
 import { useAuth } from './context/AuthContext';
 import { useOrcamentos } from './context/OrcamentosContext';
+import { useTheme } from './context/ThemeContext';
 import LoginScreen from './components/LoginScreen';
 import Sidebar from './components/Sidebar';
 import ProfileTab from './components/ProfileTab';
@@ -20,6 +21,7 @@ const REFRESH_MS = 60_000;
 
 export default function App() {
   const { isAuthenticated, initializing, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const {
     orcamentos,
     loading: orcamentosLoading,
@@ -150,6 +152,9 @@ export default function App() {
             {filtroId === '' ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
           </span>
           <div className="app-header__actions">
+            <button className="icon-button" onClick={toggleTheme} aria-label="Trocar tema">
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
             <button className="icon-button" onClick={logout} aria-label="Sair">
               <LogOut size={16} />

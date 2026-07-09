@@ -2,27 +2,31 @@ import { useState } from 'react';
 import { postGasto } from '../services/appsScript';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
+import { useAuth } from '../context/AuthContext';
+import { useMembros } from '../hooks/useMembros';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
-function estadoInicial(orcamentos, filtroId) {
+function estadoInicial(orcamentos, filtroId, email) {
   return {
     valor: '',
     categoria: 'obra_reforma',
     descricao: '',
     etapa: 'nao_especificada',
-    responsavel: '',
+    responsavel: email || '',
     orcamentoId: filtroId || orcamentos[0]?.id || '',
   };
 }
 
 export default function NewExpenseForm({ onSaved }) {
   const { orcamentos, filtroId } = useOrcamentos();
+  const { email } = useAuth();
   const { subcategoryOptions } = useCategories();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId));
+  const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId, email));
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [errorMessage, setErrorMessage] = useState('');
+  const { membros } = useMembros(form.orcamentoId);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -34,7 +38,7 @@ export default function NewExpenseForm({ onSaved }) {
   }
 
   function handleOpen() {
-    setForm(estadoInicial(orcamentos, filtroId));
+    setForm(estadoInicial(orcamentos, filtroId, email));
     setOpen(true);
   }
 
@@ -143,13 +147,15 @@ export default function NewExpenseForm({ onSaved }) {
         </div>
 
         <label className="field">
-          <span>Quem registrou</span>
-          <input
-            type="text"
-            value={form.responsavel}
-            onChange={(e) => update('responsavel', e.target.value)}
-            placeholder="seu nome"
-          />
+          <span>Quem</span>
+          <select value={form.responsavel} onChange={(e) => update('responsavel', e.target.value)}>
+            {membros.length === 0 && email && <option value={email}>{email}</option>}
+            {membros.map((m) => (
+              <option key={m.uid} value={m.email}>
+                {m.email}
+              </option>
+            ))}
+          </select>
         </label>
 
         {status === 'error' && (

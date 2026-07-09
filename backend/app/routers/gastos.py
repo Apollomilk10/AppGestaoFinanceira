@@ -66,7 +66,13 @@ async def atualizar_gasto(orcamento_id: str, gasto_id: str, body: GastoInput, us
     if not doc.exists or doc.to_dict().get("orcamentoId") != orcamento_id:
         raise HTTPException(status_code=404, detail="Lançamento não encontrado nesse orçamento.")
 
+    destino_id = orcamento_id
+    if body.novoOrcamentoId and body.novoOrcamentoId != orcamento_id:
+        await exigir_membro(body.novoOrcamentoId, user["uid"])
+        destino_id = body.novoOrcamentoId
+
     ref.update({
+        "orcamentoId": destino_id,
         "data": body.data or doc.to_dict().get("data", ""),
         "categoria": body.categoria,
         "descricao": body.descricao,

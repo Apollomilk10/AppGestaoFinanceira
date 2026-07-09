@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Plus, LogIn, Wallet, Layers, User, Trash2, Copy, Check } from 'lucide-react';
+import { X, Plus, LogIn, Wallet, Layers, User, Users, Trash2, Copy, Check } from 'lucide-react';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useAuth } from '../context/AuthContext';
+import MembersModal from './MembersModal';
 
 export default function Sidebar({ open, onClose, onOpenProfile }) {
   const { orcamentos, filtroId, setFiltro, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
@@ -13,6 +14,7 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
   const [confirmingId, setConfirmingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [copiadoId, setCopiadoId] = useState('');
+  const [vendoIntegrantes, setVendoIntegrantes] = useState(null);
 
   function fecharFormulario() {
     setModo(null);
@@ -107,6 +109,16 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
 
                 {isActive && <Check size={15} className="sidebar__item-check" />}
 
+                {!isConfirming && (
+                  <button
+                    className="icon-button"
+                    onClick={() => setVendoIntegrantes(orc)}
+                    aria-label="Ver integrantes"
+                  >
+                    <Users size={14} />
+                  </button>
+                )}
+
                 {souDono && (
                   isConfirming ? (
                     <div className="confirm-delete">
@@ -183,6 +195,10 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
           </button>
         </div>
       </aside>
+
+      {vendoIntegrantes && (
+        <MembersModal orcamento={vendoIntegrantes} onClose={() => setVendoIntegrantes(null)} />
+      )}
     </>
   );
 }

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Lock, Copy, Check } from 'lucide-react';
+import { Lock, Copy, Check, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginScreen() {
   const { login, signup } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [modo, setModo] = useState('entrar'); // entrar | cadastrar
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -74,6 +76,9 @@ export default function LoginScreen() {
 
   return (
     <div className="login-screen">
+      <button className="icon-button theme-toggle-floating" onClick={toggleTheme} aria-label="Trocar tema">
+        {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+      </button>
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-card__icon">
           <Lock size={22} strokeWidth={2.2} />

@@ -1,15 +1,15 @@
 :root {
-  /* Cores — tema claro, preto e branco como base, cor só como acento pontual */
-  --bg: #f5f5f7;
-  --bg-grid-line: rgba(17, 17, 20, 0.035);
-  --panel: #ffffff;
-  --panel-border: #e8e8ea;
-  --ink: #111114;
-  --muted: #86868b;
-  --accent: #111114; /* preto — cor de marca, botões e destaques primários */
-  --accent-soft: rgba(17, 17, 20, 0.06);
+  /* Cores — tema claro, com uma pegada mais cinza (não branco puro) */
+  --bg: #e9e9eb;
+  --bg-grid-line: rgba(17, 17, 20, 0.04);
+  --panel: #f5f5f6;
+  --panel-border: #d9d9dc;
+  --ink: #17171a;
+  --muted: #75757b;
+  --accent: #17171a; /* preto — cor de marca, botões e destaques primários */
+  --accent-soft: rgba(17, 17, 20, 0.07);
   --on-accent: #ffffff; /* texto sobre fundos pretos (botões) */
-  --measure: #111114; /* linhas de gráfico neutras */
+  --measure: #17171a; /* linhas de gráfico neutras */
   --good: #1fa463; /* verde — abaixo do orçamento, queda de gasto */
   --danger: #e1483d; /* vermelho — acima do orçamento, alta de gasto */
   --danger-soft: rgba(225, 72, 61, 0.08);
@@ -18,6 +18,23 @@
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* Tema escuro — "desligar a luz" */
+[data-theme='dark'] {
+  --bg: #18181a;
+  --bg-grid-line: rgba(255, 255, 255, 0.035);
+  --panel: #222225;
+  --panel-border: #35353a;
+  --ink: #f1f1f3;
+  --muted: #93939a;
+  --accent: #f1f1f3;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+  --on-accent: #18181a;
+  --measure: #f1f1f3;
+  --good: #34c98c;
+  --danger: #ff6b5e;
+  --danger-soft: rgba(255, 107, 94, 0.12);
 }
 
 * {
@@ -41,6 +58,7 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button,

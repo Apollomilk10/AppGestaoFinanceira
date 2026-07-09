@@ -17,6 +17,7 @@ class GastoInput(BaseModel):
     valor: float
     responsavel: str = ""
     etapa: str = "nao_especificada"
+    novoOrcamentoId: Optional[str] = None
 
 
 class CategoriaInput(BaseModel):
