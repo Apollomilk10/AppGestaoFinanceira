@@ -2,8 +2,22 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Obra — Painel de Gastos</title>
+
+    <!-- PWA: permite instalar como app na tela inicial -->
+    <link rel="manifest" href="/AppGestaoFinanceira/manifest.json" />
+    <meta name="theme-color" content="#111114" />
+
+    <!-- Ícones -->
+    <link rel="icon" type="image/png" href="/AppGestaoFinanceira/icon-192.png" />
+    <link rel="apple-touch-icon" href="/AppGestaoFinanceira/icon-192.png" />
+
+    <!-- Comportamento de app no iPhone (Safari não lê o manifest.json) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Obra" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
