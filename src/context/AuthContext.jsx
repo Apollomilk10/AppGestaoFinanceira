@@ -1,61 +1,83 @@
-import { createContext, useContext, useState } from 'react';
-import { signup as signupApi, login as loginApi } from '../services/auth';
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged,
+  signOut,
+} from 'firebase/auth';
+import { auth } from '../firebaseConfig';
+import { apiPost } from '../services/api';
 
-const STORAGE_KEY = 'obra-session';
 const AuthContext = createContext(null);
 
-function readStoredSession() {
-  const raw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+function traduzErro(codigo) {
+  const mapa = {
+    'auth/email-already-in-use': 'Já existe uma conta com esse e-mail.',
+    'auth/invalid-email': 'E-mail inválido.',
+    'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+    'auth/user-not-found': 'E-mail ou senha incorretos.',
+    'auth/wrong-password': 'E-mail ou senha incorretos.',
+    'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    'auth/too-many-requests': 'Muitas tentativas seguidas. Aguarde um pouco e tente de novo.',
+  };
+  return mapa[codigo] || 'Não foi possível completar a ação. Tente novamente.';
 }
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(readStoredSession);
+  const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
-  function persist(sessionData, remember) {
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
-  }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setInitializing(false);
+    });
+    return unsubscribe;
+  }, []);
 
   async function login(email, senha, remember) {
     try {
-      const result = await loginApi({ email, senha });
-      const sessionData = { email: result.email, token: result.token };
-      persist(sessionData, remember);
-      setSession(sessionData);
+      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+      await signInWithEmailAndPassword(auth, email.trim(), senha);
       return { ok: true };
     } catch (err) {
-      return { ok: false, message: err.message };
+      return { ok: false, message: traduzErro(err.code) };
     }
   }
 
   async function signup(email, senha, modoGrupo, codigoGrupo, nomeOrcamento, remember) {
     try {
-      const result = await signupApi({ email, senha, modoGrupo, codigoGrupo, nomeOrcamento });
-      const sessionData = { email: result.email, token: result.token };
-      persist(sessionData, remember);
-      setSession(sessionData);
-      return { ok: true, grupo: result.orcamentoId };
+      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+      await createUserWithEmailAndPassword(auth, email.trim(), senha);
+
+      // Cria ou entra no orçamento depois que a conta já existe
+      const result =
+        modoGrupo === 'entrar'
+          ? await apiPost('/orcamentos/entrar', { codigo: codigoGrupo })
+          : await apiPost('/orcamentos', { nome: nomeOrcamento });
+
+      return { ok: true, grupo: result.codigo || result.orcamentoId };
     } catch (err) {
-      return { ok: false, message: err.message };
+      // Se a conta chegou a ser criada no Firebase mas o passo do
+      // orçamento falhou, a pessoa ainda consegue logar depois e criar/
+      // entrar em um orçamento pela barra lateral.
+      const message = err.code ? traduzErro(err.code) : err.message;
+      return { ok: false, message };
     }
   }
 
   function logout() {
-    localStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(STORAGE_KEY);
-    setSession(null);
+    signOut(auth);
   }
 
   const value = {
-    isAuthenticated: !!session,
-    email: session?.email || '',
-    token: session?.token || '',
+    isAuthenticated: !!user,
+    initializing,
+    email: user?.email || '',
+    uid: user?.uid || '',
     login,
     signup,
     logout,

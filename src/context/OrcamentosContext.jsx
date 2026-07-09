@@ -1,12 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { fetchOrcamentos, criarOrcamento as criarOrcamentoApi, entrarOrcamento as entrarOrcamentoApi } from '../services/orcamentos';
+import {
+  fetchOrcamentos,
+  criarOrcamento as criarOrcamentoApi,
+  entrarOrcamento as entrarOrcamentoApi,
+} from '../services/orcamentos';
 import { useAuth } from './AuthContext';
 
 const OrcamentosContext = createContext(null);
 const ACTIVE_KEY = 'obra-orcamento-ativo';
 
 export function OrcamentosProvider({ children }) {
-  const { email, token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [orcamentos, setOrcamentos] = useState([]);
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY) || '');
   const [loading, setLoading] = useState(true);
@@ -16,10 +20,9 @@ export function OrcamentosProvider({ children }) {
     if (!isAuthenticated) return;
     setError('');
     try {
-      const rows = await fetchOrcamentos({ email, token });
+      const rows = await fetchOrcamentos();
       setOrcamentos(rows);
       setLoading(false);
-      // se não há orçamento ativo válido, seleciona o primeiro
       setActiveId((current) => {
         const aindaExiste = rows.some((o) => o.id === current);
         if (aindaExiste) return current;
@@ -31,7 +34,7 @@ export function OrcamentosProvider({ children }) {
       setError(err.message);
       setLoading(false);
     }
-  }, [email, token, isAuthenticated]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     reload();
@@ -43,14 +46,14 @@ export function OrcamentosProvider({ children }) {
   }
 
   async function criarOrcamento(nome) {
-    const result = await criarOrcamentoApi(nome, { email, token });
+    const result = await criarOrcamentoApi(nome);
     await reload();
     switchOrcamento(result.orcamentoId);
     return result;
   }
 
   async function entrarOrcamento(codigo) {
-    const result = await entrarOrcamentoApi(codigo, { email, token });
+    const result = await entrarOrcamentoApi(codigo);
     await reload();
     switchOrcamento(result.orcamentoId);
     return result;

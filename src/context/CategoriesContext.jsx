@@ -17,17 +17,17 @@ import {
 const CategoriesContext = createContext(null);
 
 export function CategoriesProvider({ children }) {
-  const { email, token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { activeId } = useOrcamentos();
   const [tree, setTree] = useState(BUILTIN_CATEGORY_TREE);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
     if (!isAuthenticated || !activeId) return;
-    const custom = await fetchCustomCategories({ email, token, orcamentoId: activeId });
+    const custom = await fetchCustomCategories({ orcamentoId: activeId });
     setTree(mergeCategoryTree(custom));
     setLoading(false);
-  }, [email, token, isAuthenticated, activeId]);
+  }, [isAuthenticated, activeId]);
 
   useEffect(() => {
     reload();
@@ -37,7 +37,7 @@ export function CategoriesProvider({ children }) {
     const categoriaChave = slugify(categoriaLabel);
     await addCategoriaApi(
       { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
-      { email, token, orcamentoId: activeId }
+      { orcamentoId: activeId }
     );
     await reload();
     return categoriaChave;
@@ -53,7 +53,7 @@ export function CategoriesProvider({ children }) {
         subcategoriaChave,
         subcategoriaLabel,
       },
-      { email, token, orcamentoId: activeId }
+      { orcamentoId: activeId }
     );
     await reload();
     return subcategoriaChave;

@@ -7,14 +7,14 @@ import { last14DaysSeries } from '../utils/insights';
 import Sparkline from './Sparkline';
 
 export default function ProfileTab({ onBack }) {
-  const { email, token } = useAuth();
+  const { email } = useAuth();
   const { orcamentos } = useOrcamentos();
   const [meusGastos, setMeusGastos] = useState([]);
   const [status, setStatus] = useState('loading');
   const [copiadoId, setCopiadoId] = useState('');
 
   useEffect(() => {
-    fetchMeusGastos({ email, token })
+    fetchMeusGastos()
       .then((rows) => {
         setMeusGastos(
           rows.map((r, i) => ({
@@ -28,7 +28,7 @@ export default function ProfileTab({ onBack }) {
         setStatus('ready');
       })
       .catch(() => setStatus('error'));
-  }, [email, token]);
+  }, [email]);
 
   function copiarCodigo(id) {
     navigator.clipboard.writeText(id);

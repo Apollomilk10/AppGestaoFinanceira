@@ -19,7 +19,7 @@ import './styles.css';
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, email, token } = useAuth();
+  const { isAuthenticated, initializing, email } = useAuth();
   const { activeId, active, loading: orcamentosLoading, error: orcamentosError, reload: reloadOrcamentos } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
@@ -44,7 +44,7 @@ export default function App() {
   async function load() {
     if (!activeId) return;
     try {
-      const data = await fetchGastos({ email, token, orcamentoId: activeId });
+      const data = await fetchGastos({ orcamentoId: activeId });
       setRows(data);
       setStatus('ready');
     } catch (err) {
@@ -63,6 +63,10 @@ export default function App() {
   }, [isAuthenticated, activeId]);
 
   const rowsMemo = useMemo(() => rows, [rows]);
+
+  if (initializing) {
+    return <StatusScreen title="Carregando…" />;
+  }
 
   if (!isAuthenticated) {
     return <LoginScreen />;

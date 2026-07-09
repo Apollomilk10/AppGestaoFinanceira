@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { MessageCircleHeart } from 'lucide-react';
 import { sendFeedback } from '../services/appsScript';
-import { useAuth } from '../context/AuthContext';
 
 export default function FeedbackButton() {
-  const session = useAuth();
   const [open, setOpen] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
@@ -22,7 +20,7 @@ export default function FeedbackButton() {
 
     setStatus('sending');
     try {
-      await sendFeedback(mensagem.trim(), session);
+      await sendFeedback(mensagem.trim());
       setStatus('sent');
     } catch (err) {
       console.error(err);
