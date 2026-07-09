@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { fetchGastos } from './services/sheets';
 import { useAuth } from './context/AuthContext';
 import { useOrcamentos } from './context/OrcamentosContext';
@@ -19,7 +19,7 @@ import './styles.css';
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, initializing, email } = useAuth();
+  const { isAuthenticated, initializing, email, logout } = useAuth();
   const { activeId, active, loading: orcamentosLoading, error: orcamentosError, reload: reloadOrcamentos } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
@@ -140,8 +140,13 @@ export default function App() {
           <button className="icon-button" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
             <Menu size={18} />
           </button>
-          <span className="mono eyebrow">{active?.nome || 'ORÇAMENTO'}</span>
-          <span style={{ width: 32 }} />
+          <span className="mono eyebrow app-header__title">{active?.nome || 'ORÇAMENTO'}</span>
+          <div className="app-header__actions">
+            <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
+            <button className="icon-button" onClick={logout} aria-label="Sair">
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
         {!showProfile && <TabBar active={activeTab} onChange={setActiveTab} />}
       </header>
@@ -160,11 +165,10 @@ export default function App() {
           {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
           <footer className="footer mono">
-            atualiza automaticamente a cada 60s · fonte: google sheets
+            atualiza automaticamente a cada 60s
           </footer>
 
           <NewExpenseForm onSaved={load} />
-          <RefreshButton onRefresh={handleForceRefresh} refreshing={refreshing} />
           <FeedbackButton />
         </>
       )}

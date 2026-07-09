@@ -8,7 +8,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [modoGrupo, setModoGrupo] = useState('criar'); // criar | entrar
-  const [nomeOrcamento, setNomeOrcamento] = useState('');
   const [codigoGrupo, setCodigoGrupo] = useState('');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
@@ -24,7 +23,7 @@ export default function LoginScreen() {
     const result =
       modo === 'entrar'
         ? await login(email, senha, remember)
-        : await signup(email, senha, modoGrupo, codigoGrupo, nomeOrcamento, remember);
+        : await signup(email, senha, modoGrupo, codigoGrupo, 'Meu espaço', remember);
 
     setStatus('idle');
 
@@ -148,19 +147,6 @@ export default function LoginScreen() {
                   value={codigoGrupo}
                   onChange={(e) => setCodigoGrupo(e.target.value.toUpperCase())}
                   placeholder="ex: A3F9K2"
-                  required
-                />
-              </label>
-            )}
-
-            {modoGrupo === 'criar' && (
-              <label className="field">
-                <span>Nome do orçamento</span>
-                <input
-                  type="text"
-                  value={nomeOrcamento}
-                  onChange={(e) => setNomeOrcamento(e.target.value)}
-                  placeholder="ex: Reforma do apartamento"
                   required
                 />
               </label>
