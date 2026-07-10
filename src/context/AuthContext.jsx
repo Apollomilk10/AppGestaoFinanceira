@@ -10,7 +10,7 @@ import {
   signOut,
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { apiPost } from '../services/api';
+import { apiPost, apiPut } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
     try {
       await updateProfile(auth.currentUser, { displayName: novoNome.trim() });
       await auth.currentUser.getIdToken(true);
-      await apiPost('/perfil/nome', { nome: novoNome.trim() });
+      await apiPut('/perfil/nome', { nome: novoNome.trim() });
       setUser({ ...auth.currentUser });
       return { ok: true };
     } catch (err) {

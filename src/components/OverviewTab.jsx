@@ -59,6 +59,9 @@ export default function OverviewTab({ rows, onSelectCategory }) {
     return { name: meta.label, value: item.valor, color: meta.color };
   });
 
+  const porCategoriaReceita = rankBy(receitas, 'categoria').slice(0, 5);
+  const maioresReceitas = topExpenses(receitas, 5);
+
   const serieMensal = saldoDiarioMes(rows);
   const saldoInicial = 0;
 
@@ -79,6 +82,17 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       <RecentTransactionsList rows={despesas} />
 
       {/* Stats rápidos */}
+      <div className="stat-row">
+        <div className="panel stat-card">
+          <span className="stat-card__label">Receitas do período</span>
+          <span className="stat-card__value mono text-good">{formatBRL(totalReceitas)}</span>
+        </div>
+        <div className="panel stat-card">
+          <span className="stat-card__label">Despesas do período</span>
+          <span className="stat-card__value mono text-danger">{formatBRL(totalDespesas)}</span>
+        </div>
+      </div>
+
       <div className="stat-row">
         <div className="panel stat-card">
           <span className="stat-card__label">Média diária (despesas)</span>
@@ -104,8 +118,8 @@ export default function OverviewTab({ rows, onSelectCategory }) {
         </button>
       )}
 
-      {/* Quebra por integrante — só faz sentido dentro de um orçamento específico */}
-      {filtroId && <MemberBreakdown orcamentoId={filtroId} />}
+      {/* Quebra por integrante — funciona tanto num orçamento específico quanto em Meu espaço */}
+      <MemberBreakdown orcamentos={filtroId ? orcamentos.filter((o) => o.id === filtroId) : orcamentos} />
 
       {/* Pizza por categoria */}
       {pieData.length > 0 && (
@@ -131,6 +145,37 @@ export default function OverviewTab({ rows, onSelectCategory }) {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Receitas */}
+      {receitas.length > 0 && (
+        <div className="panel">
+          <h2 className="panel__title">Receitas</h2>
+          <div className="rank-list">
+            {porCategoriaReceita.map((item, i) => {
+              const meta = getCategoryMeta(item.key);
+              return (
+                <div key={item.key} className="rank-row">
+                  <span className="rank-row__pos mono">{i + 1}</span>
+                  <TagIcon meta={meta} />
+                  <span className="rank-row__label">{meta.label}</span>
+                  <span className="rank-row__pct text-muted mono">{item.pct.toFixed(0)}%</span>
+                  <span className="rank-row__valor mono text-good">+{formatBRL(item.valor)}</span>
+                </div>
+              );
+            })}
+          </div>
+          {maioresReceitas.length > 0 && (
+            <>
+              <div style={{ height: 1, background: 'var(--panel-border)', margin: '12px 0' }} />
+              <span className="text-muted" style={{ fontSize: 11, letterSpacing: '0.04em' }}>MAIOR ENTRADA</span>
+              <div className="rank-row" style={{ marginTop: 6 }}>
+                <span className="rank-row__label">{maioresReceitas[0].descricao || 'Receita'}</span>
+                <span className="rank-row__valor mono text-good">+{formatBRL(maioresReceitas[0].valor)}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 

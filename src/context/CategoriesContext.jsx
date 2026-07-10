@@ -63,14 +63,14 @@ export function CategoriesProvider({ children }) {
       };
     });
 
-    try {
-      await addCategoriaApi(
-        { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
-        { orcamentoId }
-      );
-    } finally {
-      reload(); // sincroniza com o servidor em segundo plano, sem bloquear
-    }
+    await addCategoriaApi(
+      { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
+      { orcamentoId }
+    );
+    // Não recarrega do servidor aqui de propósito: o índice do Firestore
+    // pode demorar um instante pra refletir a escrita, e isso sobrescrevia
+    // a categoria que acabamos de adicionar local. O estado local já é a
+    // fonte da verdade até a próxima sincronização natural.
     return categoriaChave;
   }
 
@@ -96,19 +96,15 @@ export function CategoriesProvider({ children }) {
       };
     });
 
-    try {
-      await addCategoriaApi(
-        {
-          categoriaChave,
-          categoriaLabel: cat?.label || categoriaChave,
-          subcategoriaChave,
-          subcategoriaLabel,
-        },
-        { orcamentoId }
-      );
-    } finally {
-      reload();
-    }
+    await addCategoriaApi(
+      {
+        categoriaChave,
+        categoriaLabel: cat?.label || categoriaChave,
+        subcategoriaChave,
+        subcategoriaLabel,
+      },
+      { orcamentoId }
+    );
     return subcategoriaChave;
   }
 
