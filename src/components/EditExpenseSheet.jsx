@@ -7,6 +7,17 @@ import { useMembros } from '../hooks/useMembros';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
+function dataParaISO(data) {
+  if (!data) return '';
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+}
+
+function isoParaBR(iso) {
+  if (!iso) return '';
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
 export default function EditExpenseSheet({ row, onClose, onSaved }) {
   const { subcategoryOptions } = useCategories();
   const { orcamentos } = useOrcamentos();
@@ -17,8 +28,9 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
     categoria: row.categoria,
     etapa: row.etapa,
     responsavel: row.responsavel,
-    data: row.data ? row.data.toLocaleDateString('pt-BR') : '',
+    data: dataParaISO(row.data),
     orcamentoId: row.orcamentoId,
+    statusLancamento: row.status || 'confirmado',
   });
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -44,13 +56,14 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
       await updateGasto(
         row.rowNumber,
         {
-          data: form.data,
+          data: isoParaBR(form.data),
           categoria: form.categoria,
           descricao: form.descricao,
           valor: Number(form.valor),
           responsavel: form.responsavel,
           etapa: form.etapa,
           tipo: form.tipo,
+          status: form.statusLancamento,
           ...(mudouOrcamento ? { novoOrcamentoId: form.orcamentoId } : {}),
         },
         { orcamentoId: row.orcamentoId }
@@ -123,6 +136,11 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
         </label>
 
         <label className="field">
+          <span>Data</span>
+          <input type="date" value={form.data} onChange={(e) => update('data', e.target.value)} />
+        </label>
+
+        <label className="field">
           <span>Descrição</span>
           <input
             type="text"
@@ -161,6 +179,26 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="field">
+          <span>Situação</span>
+          <div className="mode-toggle mode-toggle--small">
+            <button
+              type="button"
+              className={form.statusLancamento === 'confirmado' ? 'mode-toggle__active' : ''}
+              onClick={() => update('statusLancamento', 'confirmado')}
+            >
+              Efetivada
+            </button>
+            <button
+              type="button"
+              className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
+              onClick={() => update('statusLancamento', 'projetado')}
+            >
+              Só projetada
+            </button>
+          </div>
         </label>
 
         {status === 'error' && <p className="field-error">{errorMessage}</p>}

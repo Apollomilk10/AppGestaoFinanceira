@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { postGasto } from '../services/appsScript';
+import { criarRecorrente } from '../services/recorrentes';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +9,16 @@ import { useMembros } from '../hooks/useMembros';
 import { sugerirCategoria } from '../utils/autoCategorize';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
+
+function hojeISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isoParaBR(iso) {
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
 
 function estadoInicial(orcamentos, filtroId, nome) {
   return {
@@ -19,6 +30,9 @@ function estadoInicial(orcamentos, filtroId, nome) {
     responsavel: nome || '',
     orcamentoId: filtroId || orcamentos[0]?.id || '',
     sugestaoAplicada: false,
+    data: hojeISO(),
+    frequencia: 'unica', // unica | recorrente
+    statusLancamento: 'confirmado', // confirmado | projetado
   };
 }
 
@@ -43,7 +57,6 @@ export default function NewExpenseForm({ onSaved }) {
 
   function handleDescricaoChange(descricao) {
     setForm((prev) => {
-      // só sugere automaticamente se a pessoa ainda não mexeu na categoria
       if (prev.sugestaoAplicada || prev.tipo === 'receita') {
         return { ...prev, descricao };
       }
@@ -69,18 +82,31 @@ export default function NewExpenseForm({ onSaved }) {
 
     setStatus('saving');
     try {
-      await postGasto(
-        {
-          data: new Date().toLocaleDateString('pt-BR'),
-          categoria: form.categoria,
+      if (form.frequencia === 'recorrente') {
+        const diaDoMes = Number(form.data.split('-')[2]);
+        await criarRecorrente(form.orcamentoId, {
           descricao: form.descricao,
           valor: Number(form.valor),
-          responsavel: form.responsavel,
+          categoria: form.categoria,
           etapa: form.etapa,
           tipo: form.tipo,
-        },
-        { orcamentoId: form.orcamentoId }
-      );
+          diaDoMes: Math.min(diaDoMes, 28),
+        });
+      } else {
+        await postGasto(
+          {
+            data: isoParaBR(form.data),
+            categoria: form.categoria,
+            descricao: form.descricao,
+            valor: Number(form.valor),
+            responsavel: form.responsavel,
+            etapa: form.etapa,
+            tipo: form.tipo,
+            status: form.statusLancamento,
+          },
+          { orcamentoId: form.orcamentoId }
+        );
+      }
       setOpen(false);
       setStatus('idle');
       onSaved?.();
@@ -142,23 +168,30 @@ export default function NewExpenseForm({ onSaved }) {
           </label>
         )}
 
-        <label className="field">
-          <span>Valor</span>
-          <div className="field__prefix">
-            <span className="mono">R$</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.01"
-              autoFocus
-              value={form.valor}
-              onChange={(e) => update('valor', e.target.value)}
-              placeholder="0,00"
-              required
-            />
-          </div>
-        </label>
+        <div className="field-row">
+          <label className="field">
+            <span>Valor</span>
+            <div className="field__prefix">
+              <span className="mono">R$</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                autoFocus
+                value={form.valor}
+                onChange={(e) => update('valor', e.target.value)}
+                placeholder="0,00"
+                required
+              />
+            </div>
+          </label>
+
+          <label className="field">
+            <span>Data</span>
+            <input type="date" value={form.data} onChange={(e) => update('data', e.target.value)} />
+          </label>
+        </div>
 
         <label className="field">
           <span>Descrição</span>
@@ -201,6 +234,54 @@ export default function NewExpenseForm({ onSaved }) {
             ))}
           </select>
         </label>
+
+        <label className="field">
+          <span>Repetição</span>
+          <div className="mode-toggle mode-toggle--small">
+            <button
+              type="button"
+              className={form.frequencia === 'unica' ? 'mode-toggle__active' : ''}
+              onClick={() => update('frequencia', 'unica')}
+            >
+              Única
+            </button>
+            <button
+              type="button"
+              className={form.frequencia === 'recorrente' ? 'mode-toggle__active' : ''}
+              onClick={() => update('frequencia', 'recorrente')}
+            >
+              Recorrente mensal
+            </button>
+          </div>
+        </label>
+
+        {form.frequencia === 'unica' && (
+          <label className="field">
+            <span>Situação</span>
+            <div className="mode-toggle mode-toggle--small">
+              <button
+                type="button"
+                className={form.statusLancamento === 'confirmado' ? 'mode-toggle__active' : ''}
+                onClick={() => update('statusLancamento', 'confirmado')}
+              >
+                Efetivada
+              </button>
+              <button
+                type="button"
+                className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
+                onClick={() => update('statusLancamento', 'projetado')}
+              >
+                Só projetada
+              </button>
+            </div>
+          </label>
+        )}
+
+        {form.frequencia === 'recorrente' && (
+          <p className="text-muted" style={{ fontSize: 12 }}>
+            Vai se repetir todo dia {form.data.split('-')[2]} de cada mês, a partir de agora.
+          </p>
+        )}
 
         {status === 'error' && (
           <p className="field-error">{errorMessage || 'Não foi possível salvar. Tente novamente.'}</p>

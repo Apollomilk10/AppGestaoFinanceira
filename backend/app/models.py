@@ -18,6 +18,7 @@ class GastoInput(BaseModel):
     responsavel: str = ""
     etapa: str = "nao_especificada"
     tipo: str = "despesa"  # "despesa" ou "receita"
+    status: str = "confirmado"  # "confirmado" ou "projetado"
     novoOrcamentoId: Optional[str] = None
 
 

@@ -48,11 +48,29 @@ export function CategoriesProvider({ children }) {
     const categoriaChave = slugify(categoriaLabel);
     const orcamentoId = orcamentoDestino();
     if (!orcamentoId) throw new Error('Você precisa estar em pelo menos um orçamento.');
-    await addCategoriaApi(
-      { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
-      { orcamentoId }
-    );
-    await reload();
+
+    // Aplica local imediatamente — evita esperar o servidor pra selecionar
+    setTree((prev) => {
+      if (prev[categoriaChave]) return prev;
+      return {
+        ...prev,
+        [categoriaChave]: {
+          label: categoriaLabel,
+          color: '#9a9aa0',
+          icon: 'MoreHorizontal',
+          subcategorias: {},
+        },
+      };
+    });
+
+    try {
+      await addCategoriaApi(
+        { categoriaChave, categoriaLabel, subcategoriaChave: '', subcategoriaLabel: '' },
+        { orcamentoId }
+      );
+    } finally {
+      reload(); // sincroniza com o servidor em segundo plano, sem bloquear
+    }
     return categoriaChave;
   }
 
@@ -61,16 +79,36 @@ export function CategoriesProvider({ children }) {
     const subcategoriaChave = slugify(subcategoriaLabel);
     const orcamentoId = orcamentoDestino();
     if (!orcamentoId) throw new Error('Você precisa estar em pelo menos um orçamento.');
-    await addCategoriaApi(
-      {
-        categoriaChave,
-        categoriaLabel: cat?.label || categoriaChave,
-        subcategoriaChave,
-        subcategoriaLabel,
-      },
-      { orcamentoId }
-    );
-    await reload();
+
+    // Aplica local imediatamente
+    setTree((prev) => {
+      const atual = prev[categoriaChave];
+      if (!atual || atual.subcategorias[subcategoriaChave]) return prev;
+      return {
+        ...prev,
+        [categoriaChave]: {
+          ...atual,
+          subcategorias: {
+            ...atual.subcategorias,
+            [subcategoriaChave]: { label: subcategoriaLabel, icon: 'MoreHorizontal' },
+          },
+        },
+      };
+    });
+
+    try {
+      await addCategoriaApi(
+        {
+          categoriaChave,
+          categoriaLabel: cat?.label || categoriaChave,
+          subcategoriaChave,
+          subcategoriaLabel,
+        },
+        { orcamentoId }
+      );
+    } finally {
+      reload();
+    }
     return subcategoriaChave;
   }
 

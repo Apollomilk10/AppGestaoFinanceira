@@ -37,6 +37,7 @@ export async function fetchGastosDeOrcamento(orcamento) {
       responsavel: (row.responsavel || '').toString().trim(),
       etapa: (row.etapa || 'Sem etapa').toString().trim(),
       tipo: row.tipo === 'receita' ? 'receita' : 'despesa',
+      status: row.status === 'projetado' ? 'projetado' : 'confirmado',
       criadoPorNome: (row.criadoPorNome || row.criadoPorEmail || '').toString().trim(),
     }))
     .filter((row) => row.valor > 0 || row.descricao);

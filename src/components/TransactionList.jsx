@@ -32,6 +32,7 @@ export default function TransactionList({ rows }) {
                     <span className="transaction-row__meta text-muted">
                       {catMeta.label} · {subMeta.label}
                       {row.responsavel ? ` · ${row.responsavel}` : ''}
+                      {row.status === 'projetado' ? ' · projetado' : ''}
                     </span>
                   </div>
                   <span className={`transaction-row__valor mono ${row.tipo === 'receita' ? 'text-good' : 'text-danger'}`}>

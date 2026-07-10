@@ -21,6 +21,7 @@ def _serializar(doc) -> dict:
         "responsavel": data.get("responsavel", ""),
         "etapa": data.get("etapa", "nao_especificada"),
         "tipo": data.get("tipo", "despesa"),
+        "status": data.get("status", "confirmado"),
         "criadoPorEmail": data.get("criadoPorEmail", ""),
         "criadoPorNome": data.get("criadoPorNome", data.get("criadoPorEmail", "")),
     }
@@ -51,6 +52,7 @@ async def criar_gasto(orcamento_id: str, body: GastoInput, user: dict = Depends(
         "responsavel": body.responsavel,
         "etapa": body.etapa,
         "tipo": body.tipo if body.tipo in ("despesa", "receita") else "despesa",
+        "status": body.status if body.status in ("confirmado", "projetado") else "confirmado",
         "criadoPorUid": user["uid"],
         "criadoPorEmail": user["email"],
         "criadoPorNome": user.get("name", user["email"]),
@@ -84,6 +86,7 @@ async def atualizar_gasto(orcamento_id: str, gasto_id: str, body: GastoInput, us
         "responsavel": body.responsavel,
         "etapa": body.etapa,
         "tipo": body.tipo if body.tipo in ("despesa", "receita") else "despesa",
+        "status": body.status if body.status in ("confirmado", "projetado") else "confirmado",
     })
     return {"status": "ok"}
 
@@ -144,6 +147,7 @@ async def meus_gastos(user: dict = Depends(get_current_user)):
             "descricao": data.get("descricao", ""),
             "valor": data.get("valor", 0),
             "tipo": data.get("tipo", "despesa"),
+            "status": data.get("status", "confirmado"),
             "orcamentoId": orcamento_id,
             "orcamentoNome": orcamento_nomes[orcamento_id],
         })

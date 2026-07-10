@@ -99,66 +99,89 @@ export function filtrarReceitas(rows) {
  * Saldo líquido: receitas menos despesas.
  */
 export function saldoTotal(rows) {
-  return rows.reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0);
+  return rows
+    .filter((r) => r.status !== 'projetado')
+    .reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0);
 }
 
 /**
- * Projeta o saldo (receitas - despesas) no fim do mês atual, com base no
- * ritmo médio diário de receitas e despesas até agora.
+ * Saldo do mês: confirmado até agora + o que já está projetado pro
+ * restante do mês (lançamentos marcados como "projetado").
  */
 export function previsaoSaldoMes(rows) {
   const now = new Date();
-  const diaDoMes = now.getDate();
-  const diasNoMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
   const doMes = rows.filter(
     (r) => r.data && r.data.getFullYear() === now.getFullYear() && r.data.getMonth() === now.getMonth()
   );
 
-  const despesasMes = doMes.filter((r) => r.tipo !== 'receita').reduce((s, r) => s + r.valor, 0);
-  const receitasMes = doMes.filter((r) => r.tipo === 'receita').reduce((s, r) => s + r.valor, 0);
+  const confirmados = doMes.filter((r) => r.status !== 'projetado');
+  const projetados = doMes.filter((r) => r.status === 'projetado');
 
-  const mediaDespesaDiaria = diaDoMes > 0 ? despesasMes / diaDoMes : 0;
-  const mediaReceitaDiaria = diaDoMes > 0 ? receitasMes / diaDoMes : 0;
+  const despesasMes = confirmados.filter((r) => r.tipo !== 'receita').reduce((s, r) => s + r.valor, 0);
+  const receitasMes = confirmados.filter((r) => r.tipo === 'receita').reduce((s, r) => s + r.valor, 0);
 
-  const despesaProjetada = mediaDespesaDiaria * diasNoMes;
-  const receitaProjetada = mediaReceitaDiaria * diasNoMes;
+  const despesaProjetada = projetados.filter((r) => r.tipo !== 'receita').reduce((s, r) => s + r.valor, 0);
+  const receitaProjetada = projetados.filter((r) => r.tipo === 'receita').reduce((s, r) => s + r.valor, 0);
+
+  const saldoAtual = receitasMes - despesasMes;
+  const saldoProjetado = saldoAtual + (receitaProjetada - despesaProjetada);
 
   return {
     despesasMes,
     receitasMes,
-    saldoAtual: receitasMes - despesasMes,
-    saldoProjetado: receitaProjetada - despesaProjetada,
+    saldoAtual,
+    saldoProjetado,
     despesaProjetada,
     receitaProjetada,
   };
 }
 
 /**
- * Saldo acumulado dia a dia, do início do mês atual até hoje — usado no
- * gráfico "Inicial / Saldo / Previsto" da Visão Geral.
+ * Série do mês inteiro: saldo real (confirmado) do dia 1 até hoje, e a
+ * partir de hoje continua com o saldo projetado (linha prevista) até o
+ * fim do mês, considerando lançamentos futuros já marcados no calendário.
  */
 export function saldoDiarioMes(rows) {
   const now = new Date();
   const hoje = now.getDate();
-  const doMes = rows.filter(
-    (r) => r.data && r.data.getFullYear() === now.getFullYear() && r.data.getMonth() === now.getMonth()
-  );
+  const diasNoMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const mes = now.getMonth();
+  const ano = now.getFullYear();
 
-  const porDia = new Map();
+  const doMes = rows.filter((r) => r.data && r.data.getFullYear() === ano && r.data.getMonth() === mes);
+
+  const porDiaConfirmado = new Map();
+  const porDiaProjetado = new Map();
   doMes.forEach((r) => {
     const dia = r.data.getDate();
     const delta = r.tipo === 'receita' ? r.valor : -r.valor;
-    porDia.set(dia, (porDia.get(dia) || 0) + delta);
+    const mapa = r.status === 'projetado' ? porDiaProjetado : porDiaConfirmado;
+    mapa.set(dia, (mapa.get(dia) || 0) + delta);
   });
 
+  const label = (dia) => `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}`;
+
   let acumulado = 0;
-  const serie = [];
+  const passado = [];
   for (let dia = 1; dia <= hoje; dia++) {
-    acumulado += porDia.get(dia) || 0;
-    serie.push({ label: `${String(dia).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`, total: acumulado });
+    acumulado += porDiaConfirmado.get(dia) || 0;
+    passado.push({ label: label(dia), real: acumulado, previsto: null });
   }
-  return serie;
+
+  let acumuladoPrevisto = acumulado;
+  const futuro = [];
+  for (let dia = hoje + 1; dia <= diasNoMes; dia++) {
+    acumuladoPrevisto += (porDiaConfirmado.get(dia) || 0) + (porDiaProjetado.get(dia) || 0);
+    futuro.push({ label: label(dia), real: null, previsto: acumuladoPrevisto });
+  }
+
+  // conecta as duas linhas no dia de hoje, pra não deixar buraco no gráfico
+  if (futuro.length > 0) {
+    passado[passado.length - 1].previsto = passado[passado.length - 1].real;
+  }
+
+  return [...passado, ...futuro];
 }
 
 export function projecaoTotal(rows, orcamento) {
