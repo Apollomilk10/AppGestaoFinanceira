@@ -155,18 +155,16 @@ export default function NewExpenseForm({ onSaved }) {
           </button>
         </div>
 
-        {orcamentos.length > 1 && (
-          <label className="field">
-            <span>Orçamento</span>
-            <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
-              {orcamentos.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label className="field">
+          <span>Salvar no orçamento</span>
+          <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
+            {orcamentos.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.nome}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div className="field-row">
           <label className="field">

@@ -1,7 +1,7 @@
 {
-  "name": "Obra — Painel de Gastos",
-  "short_name": "Obra",
-  "description": "Controle de gastos compartilhado, por orçamento.",
+  "name": "Finanças & Orçamento",
+  "short_name": "Finanças",
+  "description": "Controle de gastos e receitas compartilhado, por orçamento.",
   "start_url": "/AppGestaoFinanceira/",
   "scope": "/AppGestaoFinanceira/",
   "display": "standalone",

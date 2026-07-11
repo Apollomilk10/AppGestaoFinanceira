@@ -84,7 +84,7 @@ export default function LoginScreen() {
         <div className="login-card__icon">
           <Lock size={22} strokeWidth={2.2} />
         </div>
-        <h1 className="login-card__title">Obra — Painel de Gastos</h1>
+        <h1 className="login-card__title">Finanças & Orçamento</h1>
 
         <div className="mode-toggle">
           <button

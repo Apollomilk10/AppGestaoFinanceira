@@ -106,18 +106,16 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
           </button>
         </div>
 
-        {orcamentos.length > 1 && (
-          <label className="field">
-            <span>Orçamento</span>
-            <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
-              {orcamentos.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label className="field">
+          <span>Orçamento</span>
+          <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
+            {orcamentos.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.nome}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="field">
           <span>Valor</span>

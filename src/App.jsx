@@ -190,7 +190,7 @@ export default function App() {
 function StatusScreen({ title, subtitle, isError, children }) {
   return (
     <div className="status-screen">
-      <span className="mono status-screen__eyebrow">OBRA — PAINEL DE GASTOS</span>
+      <span className="mono status-screen__eyebrow">FINANÇAS & ORÇAMENTO</span>
       <h1 className={isError ? 'text-accent' : ''}>{title}</h1>
       {subtitle && <p className="text-muted">{subtitle}</p>}
       {children}
