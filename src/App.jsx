@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Menu, LogOut, Sun, Moon } from 'lucide-react';
+import Spinner from './components/Spinner';
 import { fetchGastosAgregados, fetchGastosDeOrcamento } from './services/sheets';
 import { useAuth } from './context/AuthContext';
 import { useOrcamentos } from './context/OrcamentosContext';
@@ -149,7 +150,7 @@ export default function App() {
             <Menu size={18} />
           </button>
           <span className="mono eyebrow app-header__title">
-            {filtroId === '' ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
+            {filtroId === '' ? 'VISÃO GERAL' : filtro?.nome || 'ORÇAMENTO'}
           </span>
           <div className="app-header__actions">
             <button className="icon-button" onClick={toggleTheme} aria-label="Trocar tema">
@@ -190,6 +191,7 @@ export default function App() {
 function StatusScreen({ title, subtitle, isError, children }) {
   return (
     <div className="status-screen">
+      {!isError && <Spinner size={36} />}
       <span className="mono status-screen__eyebrow">FINANÇAS & ORÇAMENTO</span>
       <h1 className={isError ? 'text-accent' : ''}>{title}</h1>
       {subtitle && <p className="text-muted">{subtitle}</p>}

@@ -83,7 +83,7 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
             onClick={() => handleSelect('')}
           >
             <Layers size={16} />
-            <span className="sidebar__item-name">Meu espaço (tudo)</span>
+            <span className="sidebar__item-name">Visão geral (todos)</span>
             {filtroId === '' && <Check size={15} />}
           </button>
 

@@ -184,6 +184,61 @@ export function saldoDiarioMes(rows) {
   return [...passado, ...futuro];
 }
 
+/**
+ * Percentual acumulado de despesas por integrante (baseado em quem foi
+ * declarado no campo "Quem", via responsavelNome já resolvido).
+ */
+export function porIntegrantePercentual(rows) {
+  const despesas = rows.filter((r) => r.tipo !== 'receita' && r.responsavelNome);
+  const total = despesas.reduce((s, r) => s + r.valor, 0);
+
+  const porPessoa = new Map();
+  despesas.forEach((r) => {
+    porPessoa.set(r.responsavelNome, (porPessoa.get(r.responsavelNome) || 0) + r.valor);
+  });
+
+  return Array.from(porPessoa, ([nome, valor]) => ({
+    nome,
+    valor,
+    pct: total > 0 ? (valor / total) * 100 : 0,
+  })).sort((a, b) => b.valor - a.valor);
+}
+
+/**
+ * Quanto cada integrante gastou em cada um dos últimos N meses — pra um
+ * gráfico de barras agrupadas por mês.
+ */
+export function porIntegranteMensal(rows, meses = 6) {
+  const now = new Date();
+  const baldes = Array.from({ length: meses }).map((_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (meses - 1 - i), 1);
+    return { ano: d.getFullYear(), mes: d.getMonth(), label: d.toLocaleDateString('pt-BR', { month: 'short' }) };
+  });
+
+  const pessoas = Array.from(
+    new Set(rows.filter((r) => r.tipo !== 'receita' && r.responsavelNome).map((r) => r.responsavelNome))
+  );
+
+  const serie = baldes.map((b) => {
+    const linha = { label: b.label };
+    pessoas.forEach((nome) => {
+      linha[nome] = rows
+        .filter(
+          (r) =>
+            r.tipo !== 'receita' &&
+            r.responsavelNome === nome &&
+            r.data &&
+            r.data.getFullYear() === b.ano &&
+            r.data.getMonth() === b.mes
+        )
+        .reduce((s, r) => s + r.valor, 0);
+    });
+    return linha;
+  });
+
+  return { serie, pessoas };
+}
+
 export function projecaoTotal(rows, orcamento) {
   const now = new Date();
   const diaDoMes = now.getDate();

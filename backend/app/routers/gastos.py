@@ -10,16 +10,47 @@ from ..models import GastoInput
 router = APIRouter(tags=["gastos"])
 
 
-def _mapa_membros(orcamento_id: str) -> dict:
-    """uid -> nome atual, direto da aba de membros (sempre em dia com o
-    perfil, mesmo que o gasto tenha sido lançado há tempos)."""
+def _mapa_membros(orcamento_id: str):
+    """Monta dois mapas: uid -> nome, e email -> uid. Isso permite
+    reconhecer lançamentos antigos que guardaram o e-mail (ou nome solto)
+    no campo "responsavel", unificando com a identidade atual da pessoa."""
     docs = db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()
-    return {d.to_dict().get("uid"): d.to_dict().get("nome") or d.to_dict().get("email") for d in docs}
+    uid_para_nome = {}
+    email_para_uid = {}
+    for d in docs:
+        data = d.to_dict()
+        uid = data.get("uid")
+        email = (data.get("email") or "").strip().lower()
+        nome = data.get("nome") or data.get("email")
+        uid_para_nome[uid] = nome
+        if email:
+            email_para_uid[email] = uid
+    return uid_para_nome, email_para_uid
 
 
-def _serializar(doc, membros_map: dict) -> dict:
+def _resolver_identidade(valor: str, uid_para_nome: dict, email_para_uid: dict):
+    """Dado o que estiver salvo no campo 'responsavel' (pode ser um uid,
+    um e-mail antigo, ou até um nome solto de versões bem antigas), tenta
+    achar a pessoa real e devolve (chave_estavel, nome_atual)."""
+    if not valor:
+        return "nao_informado", "Não informado"
+
+    if valor in uid_para_nome:
+        return valor, uid_para_nome[valor]
+
+    valor_normalizado = valor.strip().lower()
+    if valor_normalizado in email_para_uid:
+        uid = email_para_uid[valor_normalizado]
+        return uid, uid_para_nome.get(uid, valor)
+
+    # não conseguiu casar com ninguém atual do orçamento — mantém como veio
+    return valor, valor
+
+
+def _serializar(doc, uid_para_nome: dict, email_para_uid: dict) -> dict:
     data = doc.to_dict()
     responsavel = data.get("responsavel", "")
+    _, nome_resolvido = _resolver_identidade(responsavel, uid_para_nome, email_para_uid)
     return {
         "id": doc.id,
         "data": data.get("data", ""),
@@ -29,7 +60,7 @@ def _serializar(doc, membros_map: dict) -> dict:
         "responsavel": responsavel,
         # nome de exibição: resolvido AGORA a partir do perfil atual da
         # pessoa declarada em "Quem" — nunca um nome "congelado" antigo
-        "responsavelNome": membros_map.get(responsavel, responsavel),
+        "responsavelNome": nome_resolvido,
         "etapa": data.get("etapa", "nao_especificada"),
         "tipo": data.get("tipo", "despesa"),
         "status": data.get("status", "confirmado"),
@@ -41,9 +72,9 @@ def _serializar(doc, membros_map: dict) -> dict:
 @router.get("/orcamentos/{orcamento_id}/gastos")
 async def listar_gastos(orcamento_id: str, user: dict = Depends(get_current_user)):
     await exigir_membro(orcamento_id, user["uid"])
-    membros_map = _mapa_membros(orcamento_id)
+    uid_para_nome, email_para_uid = _mapa_membros(orcamento_id)
     docs = db.collection("gastos").where("orcamentoId", "==", orcamento_id).stream()
-    rows = [_serializar(d, membros_map) for d in docs]
+    rows = [_serializar(d, uid_para_nome, email_para_uid) for d in docs]
     return {"rows": rows}
 
 
@@ -119,25 +150,26 @@ async def excluir_gasto(orcamento_id: str, gasto_id: str, user: dict = Depends(g
 @router.get("/orcamentos/{orcamento_id}/por-integrante")
 async def gastos_por_integrante(orcamento_id: str, user: dict = Depends(get_current_user)):
     await exigir_membro(orcamento_id, user["uid"])
-    membros_map = _mapa_membros(orcamento_id)
+    uid_para_nome, email_para_uid = _mapa_membros(orcamento_id)
     docs = db.collection("gastos").where("orcamentoId", "==", orcamento_id).stream()
 
     resumo = {}
     for d in docs:
         data = d.to_dict()
         # Quebra por quem foi DECLARADO no campo "Quem" do lançamento —
-        # não por quem efetivamente cadastrou no app.
-        uid_declarado = data.get("responsavel") or "nao_informado"
-        nome = membros_map.get(uid_declarado, uid_declarado if uid_declarado != "nao_informado" else "Não informado")
+        # não por quem efetivamente cadastrou no app. Casa por uid OU por
+        # e-mail antigo, unificando com o nome atual da pessoa.
+        bruto = data.get("responsavel") or ""
+        chave, nome = _resolver_identidade(bruto, uid_para_nome, email_para_uid)
         valor = data.get("valor", 0)
         tipo = data.get("tipo", "despesa")
 
-        if uid_declarado not in resumo:
-            resumo[uid_declarado] = {"uid": uid_declarado, "nome": nome, "despesas": 0, "receitas": 0}
+        if chave not in resumo:
+            resumo[chave] = {"uid": chave, "nome": nome, "despesas": 0, "receitas": 0}
         if tipo == "receita":
-            resumo[uid_declarado]["receitas"] += valor
+            resumo[chave]["receitas"] += valor
         else:
-            resumo[uid_declarado]["despesas"] += valor
+            resumo[chave]["despesas"] += valor
 
     return {"rows": list(resumo.values())}
 

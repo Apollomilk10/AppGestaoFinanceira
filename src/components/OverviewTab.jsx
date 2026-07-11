@@ -6,6 +6,7 @@ import TagIcon from './TagIcon';
 import MetasPanel from './MetasPanel';
 import RecorrentesModal from './RecorrentesModal';
 import MemberBreakdown from './MemberBreakdown';
+import MemberInsights from './MemberInsights';
 import SaldoMensalChart from './SaldoMensalChart';
 import RecentTransactionsList from './RecentTransactionsList';
 import { useCategories } from '../context/CategoriesContext';
@@ -120,6 +121,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
 
       {/* Quebra por integrante — funciona tanto num orçamento específico quanto em Meu espaço */}
       <MemberBreakdown orcamentos={filtroId ? orcamentos.filter((o) => o.id === filtroId) : orcamentos} />
+      <MemberInsights rows={despesas} />
 
       {/* Pizza por categoria */}
       {pieData.length > 0 && (
