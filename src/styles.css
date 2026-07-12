@@ -52,7 +52,7 @@
   gap: 4px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 4px;
 }
 
@@ -68,7 +68,7 @@
   font-size: 13px;
   font-weight: 500;
   padding: 9px 8px;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -98,7 +98,7 @@
 .panel {
   border: 1px solid var(--panel-border);
   background: var(--panel);
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 18px 20px;
   box-shadow: 0 1px 2px rgba(17, 17, 20, 0.04), 0 8px 24px rgba(17, 17, 20, 0.03);
 }
@@ -133,7 +133,7 @@
 .inline-add--stack select {
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 9px 10px;
   font-size: 13px;
   color: var(--ink);
@@ -147,7 +147,7 @@
 
 .meta-card {
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: 16px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -215,7 +215,7 @@
   gap: 10px;
   background: var(--danger-soft);
   border: 1px solid var(--danger);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 12px 14px;
   color: var(--danger);
   margin-bottom: 4px;
@@ -251,7 +251,7 @@
 .recorrentes-list__icon {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--accent-soft);
   display: flex;
   align-items: center;
@@ -540,7 +540,7 @@
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 8px 10px;
   color: var(--ink);
   font-size: 14px;
@@ -550,7 +550,7 @@
   background: var(--accent);
   color: var(--on-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 10px 18px;
   font-weight: 600;
   font-size: 13px;
@@ -632,7 +632,7 @@
   gap: 8px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 10px 14px;
   color: var(--muted);
 }
@@ -750,7 +750,7 @@
 .chart-tooltip {
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
@@ -939,7 +939,7 @@
   max-width: 420px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 16px 16px 0 0;
+  border-radius: 24px 24px 0 0;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -950,7 +950,7 @@
 
 @media (min-width: 600px) {
   .sheet {
-    border-radius: 12px;
+    border-radius: 24px;
   }
 }
 
@@ -978,7 +978,7 @@
 .field select {
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 10px 12px;
   color: var(--ink);
   font-size: 15px;
@@ -990,7 +990,7 @@
   gap: 8px;
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 0 12px;
 }
 
@@ -1027,7 +1027,7 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid var(--panel-border);
   background: var(--panel);
   color: var(--muted);
@@ -1052,7 +1052,7 @@
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 8px 10px;
   color: var(--ink);
   font-size: 13px;
@@ -1062,7 +1062,7 @@
 .inline-add__cancel {
   flex-shrink: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 8px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -1261,7 +1261,7 @@
   max-width: 360px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
@@ -1272,7 +1272,7 @@
 .login-card__icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--accent-soft);
   color: var(--ink);
   display: flex;
@@ -1312,7 +1312,7 @@
   display: flex;
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 3px;
   gap: 2px;
 }
@@ -1322,7 +1322,7 @@
   border: none;
   background: none;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 13px;
   color: var(--muted);
   cursor: pointer;
@@ -1352,7 +1352,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--panel-border);
   background: var(--panel);
   color: var(--muted);
@@ -1379,7 +1379,7 @@
   justify-content: space-between;
   background: var(--bg);
   border: 1px dashed var(--panel-border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 14px 16px;
 }
 
@@ -1437,7 +1437,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--ink);
   font-size: 13.5px;
 }
@@ -1454,7 +1454,7 @@
   gap: 10px;
   width: 100%;
   padding: 10px 10px;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .sidebar__item-clickarea {
@@ -1514,7 +1514,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: none;
   background: none;
   color: var(--ink);
@@ -1538,7 +1538,7 @@
 .sidebar__form input {
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 9px 10px;
   font-size: 13px;
   color: var(--ink);
@@ -1645,7 +1645,7 @@
 .icon-button {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--panel-border);
   background: var(--panel);
   color: var(--muted);
@@ -1683,7 +1683,7 @@
   cursor: pointer;
   font-weight: 600;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .confirm-delete__yes {
@@ -1698,7 +1698,7 @@
 .feedback-textarea {
   background: var(--bg);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 10px 12px;
   color: var(--ink);
   font-size: 14px;

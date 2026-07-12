@@ -15,9 +15,9 @@ export function OrcamentosProvider({ children }) {
   const [orcamentos, setOrcamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // '' = "Meu espaço" (visão agregada de todos). Qualquer outro valor é o
-  // id de um orçamento específico que a pessoa escolheu ver sozinho.
   const [filtroId, setFiltroId] = useState(() => localStorage.getItem(FILTRO_KEY) || '');
+
+  const pessoal = orcamentos.find((o) => o.pessoal) || null;
 
   const reload = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -27,9 +27,11 @@ export function OrcamentosProvider({ children }) {
       setOrcamentos(rows);
       setLoading(false);
       setFiltroId((current) => {
-        if (current === '') return current; // "Meu espaço" é sempre válido
+        // se ainda não tem filtro escolhido, ou o que tinha sumiu, cai
+        // sempre no orçamento pessoal ("Meu espaço") — é o único fixo
         const aindaExiste = rows.some((o) => o.id === current);
-        return aindaExiste ? current : '';
+        if (aindaExiste) return current;
+        return rows.find((o) => o.pessoal)?.id || rows[0]?.id || '';
       });
     } catch (err) {
       setError(err.message);
@@ -60,11 +62,15 @@ export function OrcamentosProvider({ children }) {
 
   async function excluirOrcamento(orcamentoId) {
     await excluirOrcamentoApi(orcamentoId);
-    if (filtroId === orcamentoId) setFiltro('');
+    if (filtroId === orcamentoId) setFiltro(pessoal?.id || '');
     await reload();
   }
 
   const filtro = orcamentos.find((o) => o.id === filtroId) || null;
+  // "Meu Espaço" é sempre o orçamento pessoal — quando ele está selecionado,
+  // a visão é agregada (soma de tudo); qualquer outro orçamento mostra só
+  // os próprios dados.
+  const isMeuEspaco = !!filtro?.pessoal;
 
   const value = {
     orcamentos,
@@ -76,6 +82,8 @@ export function OrcamentosProvider({ children }) {
     excluirOrcamento,
     filtroId,
     filtro,
+    isMeuEspaco,
+    pessoal,
     setFiltro,
   };
 

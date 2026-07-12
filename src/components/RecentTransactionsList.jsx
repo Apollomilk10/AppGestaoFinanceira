@@ -16,7 +16,7 @@ export default function RecentTransactionsList({ rows, limite = 5 }) {
 
   return (
     <div className="panel">
-      <h2 className="panel__title">Últimas despesas</h2>
+      <h2 className="panel__title">Últimos lançamentos</h2>
       <div className="recent-mini-list">
         {recentes.map((row) => {
           const meta = getCategoryMeta(row.categoria);

@@ -37,7 +37,7 @@ function ChartTooltip({ active, payload }) {
 
 export default function OverviewTab({ rows, onSelectCategory }) {
   const { getCategoryMeta } = useCategories();
-  const { orcamentos, filtroId } = useOrcamentos();
+  const { orcamentos, filtroId, isMeuEspaco } = useOrcamentos();
   const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
 
   const despesas = filtrarDespesas(rows);
@@ -67,7 +67,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   const saldoInicial = 0;
 
   // orçamento pra recorrentes/metas: o filtrado, ou o único que a pessoa tem
-  const orcamentoAlvo = filtroId || orcamentos.find((o) => o.pessoal)?.id || orcamentos[0]?.id || null;
+  const orcamentoAlvo = filtroId || null;
 
   return (
     <div className="tab-content">
@@ -80,7 +80,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       />
 
       {/* Últimas despesas */}
-      <RecentTransactionsList rows={despesas} />
+      <RecentTransactionsList rows={rows} />
 
       {/* Stats rápidos */}
       <div className="stat-row">
@@ -120,7 +120,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       )}
 
       {/* Quebra por integrante — funciona tanto num orçamento específico quanto em Meu espaço */}
-      <MemberBreakdown orcamentos={filtroId ? orcamentos.filter((o) => o.id === filtroId) : orcamentos} />
+      <MemberBreakdown orcamentos={isMeuEspaco ? orcamentos : orcamentos.filter((o) => o.id === filtroId)} />
       <MemberInsights rows={despesas} />
 
       {/* Pizza por categoria */}

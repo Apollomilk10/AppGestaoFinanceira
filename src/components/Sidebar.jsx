@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, LogIn, Wallet, Layers, User, Users, Tags, Trash2, Copy, Check } from 'lucide-react';
+import { X, Plus, LogIn, Wallet, User, Users, Tags, Trash2, Copy, Check } from 'lucide-react';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useAuth } from '../context/AuthContext';
 import MembersModal from './MembersModal';
@@ -78,15 +78,6 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
         </div>
 
         <div className="sidebar__list">
-          <button
-            className={`sidebar__item sidebar__item--clickable ${filtroId === '' ? 'sidebar__item--active' : ''}`}
-            onClick={() => handleSelect('')}
-          >
-            <Layers size={16} />
-            <span className="sidebar__item-name">Meu espaço</span>
-            {filtroId === '' && <Check size={15} />}
-          </button>
-
           {orcamentos.map((orc) => {
             const souDono = orc.criadoPorUid === uid;
             const isConfirming = confirmingId === orc.id;
@@ -101,10 +92,7 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
                 >
                   {orc.pessoal ? <User size={16} /> : <Wallet size={16} />}
                   <div className="sidebar__item-main">
-                    <span className="sidebar__item-name">
-                      {orc.nome}
-                      {orc.pessoal && <span className="text-muted" style={{ fontWeight: 400 }}> (pessoal)</span>}
-                    </span>
+                    <span className="sidebar__item-name">{orc.nome}</span>
                     {!orc.pessoal && (
                       <span className="sidebar__item-code mono" onClick={(e) => { e.stopPropagation(); copiarCodigo(orc.codigo); }}>
                         {copiadoId === orc.codigo ? <Check size={11} /> : <Copy size={11} />}

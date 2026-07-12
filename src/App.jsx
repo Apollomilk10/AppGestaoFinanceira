@@ -30,6 +30,7 @@ export default function App() {
     reload: reloadOrcamentos,
     filtroId,
     filtro,
+    isMeuEspaco,
   } = useOrcamentos();
 
   const [rows, setRows] = useState([]);
@@ -55,7 +56,7 @@ export default function App() {
     if (orcamentos.length === 0) return;
     try {
       const data =
-        filtroId === ''
+        isMeuEspaco
           ? await fetchGastosAgregados(orcamentos)
           : await fetchGastosDeOrcamento(filtro || orcamentos.find((o) => o.id === filtroId));
       setRows(data);
@@ -150,7 +151,7 @@ export default function App() {
             <Menu size={18} />
           </button>
           <span className="mono eyebrow app-header__title">
-            {filtroId === '' ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
+            {isMeuEspaco ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
           </span>
           <div className="app-header__actions">
             <button className="icon-button" onClick={toggleTheme} aria-label="Trocar tema">
