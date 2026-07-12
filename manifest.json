@@ -6,8 +6,8 @@
   "scope": "/AppGestaoFinanceira/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5f5f7",
-  "theme_color": "#111114",
+  "background_color": "#f5efe6",
+  "theme_color": "#2e5a44",
   "icons": [
     {
       "src": "icon-192.png",
