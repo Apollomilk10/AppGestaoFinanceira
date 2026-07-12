@@ -19,7 +19,7 @@ export default function RecorrentesModal({ orcamentoId, onClose }) {
   const [recorrentes, setRecorrentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [criando, setCriando] = useState(false);
-  const [form, setForm] = useState({ descricao: '', valor: '', categoria: 'moradia', diaDoMes: '5', tipo: 'despesa' });
+  const [form, setForm] = useState({ descricao: '', valor: '', categoria: 'moradia', diaDoMes: '5', tipo: 'despesa', parcelas: '' });
   const [error, setError] = useState('');
 
   async function carregar() {
@@ -51,8 +51,9 @@ export default function RecorrentesModal({ orcamentoId, onClose }) {
         etapa: 'nao_especificada',
         tipo: form.tipo,
         diaDoMes: Number(form.diaDoMes),
+        parcelas: form.parcelas ? Number(form.parcelas) : null,
       });
-      setForm({ descricao: '', valor: '', categoria: 'moradia', diaDoMes: '5', tipo: 'despesa' });
+      setForm({ descricao: '', valor: '', categoria: 'moradia', diaDoMes: '5', tipo: 'despesa', parcelas: '' });
       setCriando(false);
       carregar();
     } catch (err) {
@@ -137,6 +138,14 @@ export default function RecorrentesModal({ orcamentoId, onClose }) {
                 placeholder="Dia do mês"
               />
             </div>
+            <input
+              type="number"
+              min="2"
+              max="60"
+              value={form.parcelas}
+              onChange={(e) => setForm((p) => ({ ...p, parcelas: e.target.value }))}
+              placeholder="Parcelas (deixe vazio pra recorrente fixa, sem fim)"
+            />
             <div className="sidebar__form-actions">
               <button type="submit" className="primary-button">criar</button>
               <button type="button" className="link-button" onClick={() => setCriando(false)}>cancelar</button>
@@ -154,7 +163,10 @@ export default function RecorrentesModal({ orcamentoId, onClose }) {
               <span className="recorrentes-list__icon"><Repeat size={14} /></span>
               <div className="recorrentes-list__main">
                 <span className="recorrentes-list__desc">{r.descricao}</span>
-                <span className="text-muted" style={{ fontSize: 11.5 }}>todo dia {r.diaDoMes}</span>
+                <span className="text-muted" style={{ fontSize: 11.5 }}>
+                  todo dia {r.diaDoMes} · {r.parcelas ? `parcela ${Math.min(r.vezesGeradas + 1, r.parcelas)}/${r.parcelas}` : 'recorrente fixa'}
+                  {!r.ativo && r.parcelas ? ' · concluída' : ''}
+                </span>
               </div>
               <span className={`mono ${r.tipo === 'receita' ? 'text-good' : ''}`}>{formatBRL(r.valor)}</span>
               <button className="icon-button icon-button--danger" onClick={() => handleExcluir(r.id)}>

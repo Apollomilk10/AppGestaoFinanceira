@@ -67,6 +67,20 @@ export default function App() {
     }
   }
 
+  /**
+   * Insere o lançamento novo direto na tela, sem esperar o servidor —
+   * o Firestore às vezes demora uma fração de segundo pra indexar a
+   * escrita nova, e um recarregamento imediato podia não trazê-la ainda.
+   * Depois disso, sincroniza com o servidor em segundo plano.
+   */
+  function addRowOptimista(row) {
+    setRows((prev) => [row, ...prev]);
+    // Não recarrega do servidor aqui de propósito — a leitura por query do
+    // Firestore pode demorar um instante pra refletir a escrita, e isso
+    // sobrescrevia o lançamento recém-criado (mesma causa do bug de
+    // categoria). O próximo refresh automático (60s) sincroniza sozinho.
+  }
+
   useEffect(() => {
     if (!isAuthenticated || orcamentos.length === 0) return;
     setStatus('loading');
@@ -181,7 +195,7 @@ export default function App() {
 
           <footer className="footer mono">atualiza automaticamente a cada 60s</footer>
 
-          <NewExpenseForm onSaved={load} />
+          <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
           <FeedbackButton />
         </>
       )}

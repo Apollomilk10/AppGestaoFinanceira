@@ -21,6 +21,8 @@ def _serializar(doc) -> dict:
         "tipo": data.get("tipo", "despesa"),
         "diaDoMes": data.get("diaDoMes", 1),
         "ativo": data.get("ativo", True),
+        "parcelas": data.get("parcelas"),
+        "vezesGeradas": data.get("vezesGeradas", 0),
     }
 
 
@@ -39,6 +41,9 @@ async def criar_recorrente(orcamento_id: str, body: RecorrenteInput, user: dict 
     if not (1 <= body.diaDoMes <= 28):
         raise HTTPException(status_code=400, detail="Dia do mês precisa ser entre 1 e 28.")
 
+    if body.parcelas is not None and body.parcelas < 1:
+        raise HTTPException(status_code=400, detail="Número de parcelas precisa ser pelo menos 1.")
+
     db.collection("recorrentes").add({
         "orcamentoId": orcamento_id,
         "descricao": body.descricao.strip(),
@@ -48,6 +53,8 @@ async def criar_recorrente(orcamento_id: str, body: RecorrenteInput, user: dict 
         "tipo": body.tipo if body.tipo in ("despesa", "receita") else "despesa",
         "diaDoMes": body.diaDoMes,
         "ativo": True,
+        "parcelas": body.parcelas,  # None = recorrente fixa; número = parcelado
+        "vezesGeradas": 0,
         "ultimoMesGerado": "",
         "criadoPorUid": user["uid"],
         "criadoPorEmail": user["email"],
@@ -87,12 +94,21 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
         if agora.day < data.get("diaDoMes", 1):
             continue
 
+        parcelas = data.get("parcelas")
+        vezes_geradas = data.get("vezesGeradas", 0)
+        if parcelas is not None and vezes_geradas >= parcelas:
+            d.reference.update({"ativo": False})
+            continue
+
+        numero_parcela = vezes_geradas + 1
+        sufixo = f" (parcela {numero_parcela}/{parcelas})" if parcelas else " (recorrente)"
+
         data_lancamento = agora.replace(day=min(data.get("diaDoMes", 1), 28))
         db.collection("gastos").add({
             "orcamentoId": orcamento_id,
             "data": data_lancamento.strftime("%d/%m/%Y"),
             "categoria": data.get("categoria", "outro"),
-            "descricao": data.get("descricao", "") + " (recorrente)",
+            "descricao": data.get("descricao", "") + sufixo,
             "valor": data.get("valor", 0),
             "responsavel": data.get("criadoPorEmail", ""),
             "etapa": data.get("etapa", "nao_especificada"),
@@ -103,7 +119,11 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
             "criadoEm": agora,
             "geradoDeRecorrente": d.id,
         })
-        d.reference.update({"ultimoMesGerado": mes_atual})
+
+        atualizacao = {"ultimoMesGerado": mes_atual, "vezesGeradas": numero_parcela}
+        if parcelas is not None and numero_parcela >= parcelas:
+            atualizacao["ativo"] = False
+        d.reference.update(atualizacao)
         criados += 1
 
     return {"status": "ok", "criados": criados}

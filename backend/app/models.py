@@ -51,3 +51,4 @@ class RecorrenteInput(BaseModel):
     tipo: str = "despesa"
     diaDoMes: int = 1
     ativo: bool = True
+    parcelas: Optional[int] = None  # None = recorrente fixa (sem fim); número = parcelado

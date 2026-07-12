@@ -31,12 +31,13 @@ function estadoInicial(orcamentos, filtroId, uid) {
     orcamentoId: filtroId || orcamentos.find((o) => o.pessoal)?.id || orcamentos[0]?.id || '',
     sugestaoAplicada: false,
     data: hojeISO(),
-    frequencia: 'unica', // unica | recorrente
+    frequencia: 'unica', // unica | recorrente | parcelado
+    parcelas: '',
     statusLancamento: 'confirmado', // confirmado | projetado
   };
 }
 
-export default function NewExpenseForm({ onSaved }) {
+export default function NewExpenseForm({ onSaved, onSavedRow }) {
   const { orcamentos, filtroId } = useOrcamentos();
   const { nome, uid } = useAuth();
   const { subcategoryOptions } = useCategories();
@@ -82,7 +83,12 @@ export default function NewExpenseForm({ onSaved }) {
 
     setStatus('saving');
     try {
-      if (form.frequencia === 'recorrente') {
+      if (form.frequencia === 'recorrente' || form.frequencia === 'parcelado') {
+        if (form.frequencia === 'parcelado' && (!form.parcelas || Number(form.parcelas) < 2)) {
+          setErrorMessage('Informe a quantidade de parcelas (mínimo 2).');
+          setStatus('error');
+          return;
+        }
         const diaDoMes = Number(form.data.split('-')[2]);
         await criarRecorrente(form.orcamentoId, {
           descricao: form.descricao,
@@ -91,9 +97,11 @@ export default function NewExpenseForm({ onSaved }) {
           etapa: form.etapa,
           tipo: form.tipo,
           diaDoMes: Math.min(diaDoMes, 28),
+          parcelas: form.frequencia === 'parcelado' ? Number(form.parcelas) : null,
         });
+        onSaved?.();
       } else {
-        await postGasto(
+        const resultado = await postGasto(
           {
             data: isoParaBR(form.data),
             categoria: form.categoria,
@@ -106,10 +114,26 @@ export default function NewExpenseForm({ onSaved }) {
           },
           { orcamentoId: form.orcamentoId }
         );
+
+        const orcamentoEscolhido = orcamentos.find((o) => o.id === form.orcamentoId);
+        onSavedRow?.({
+          id: resultado.id,
+          rowNumber: resultado.id,
+          orcamentoId: form.orcamentoId,
+          orcamentoNome: orcamentoEscolhido?.nome || '',
+          data: new Date(`${form.data}T00:00:00`),
+          categoria: form.categoria,
+          descricao: form.descricao,
+          valor: Number(form.valor),
+          responsavel: form.responsavel,
+          responsavelNome: resultado.responsavelNome || form.responsavel,
+          etapa: form.etapa,
+          tipo: form.tipo,
+          status: form.statusLancamento,
+        });
       }
       setOpen(false);
       setStatus('idle');
-      onSaved?.();
     } catch (err) {
       console.error(err);
       setErrorMessage(err.message || 'Erro desconhecido.');
@@ -248,7 +272,14 @@ export default function NewExpenseForm({ onSaved }) {
               className={form.frequencia === 'recorrente' ? 'mode-toggle__active' : ''}
               onClick={() => update('frequencia', 'recorrente')}
             >
-              Recorrente mensal
+              Recorrente fixa
+            </button>
+            <button
+              type="button"
+              className={form.frequencia === 'parcelado' ? 'mode-toggle__active' : ''}
+              onClick={() => update('frequencia', 'parcelado')}
+            >
+              Parcelado
             </button>
           </div>
         </label>
@@ -275,9 +306,29 @@ export default function NewExpenseForm({ onSaved }) {
           </label>
         )}
 
+        {form.frequencia === 'parcelado' && (
+          <label className="field">
+            <span>Quantidade de parcelas</span>
+            <input
+              type="number"
+              min="2"
+              max="60"
+              value={form.parcelas}
+              onChange={(e) => update('parcelas', e.target.value)}
+              placeholder="ex: 12"
+            />
+          </label>
+        )}
+
         {form.frequencia === 'recorrente' && (
           <p className="text-muted" style={{ fontSize: 12 }}>
-            Vai se repetir todo dia {form.data.split('-')[2]} de cada mês, a partir de agora.
+            Vai se repetir todo dia {form.data.split('-')[2]} de cada mês, sem data pra acabar.
+          </p>
+        )}
+
+        {form.frequencia === 'parcelado' && form.parcelas && (
+          <p className="text-muted" style={{ fontSize: 12 }}>
+            Vai se repetir todo dia {form.data.split('-')[2]} de cada mês, por {form.parcelas}x, e parar sozinho.
           </p>
         )}
 

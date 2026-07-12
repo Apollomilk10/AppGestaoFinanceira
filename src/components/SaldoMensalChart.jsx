@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Check, Circle, Clock } from 'lucide-react';
+import { Check, Circle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { saldoDiarioMes, previsaoSaldoMes } from '../utils/insights';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -22,13 +24,40 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-export default function SaldoMensalChart({ serie, saldoInicial, saldoAtual, saldoPrevisto }) {
-  const nomeMes = MESES[new Date().getMonth()];
+export default function SaldoMensalChart({ rows }) {
+  const [mesOffset, setMesOffset] = useState(0);
+
+  const base = new Date();
+  const alvo = new Date(base.getFullYear(), base.getMonth() + mesOffset, 1);
+  const nomeMes = MESES[alvo.getMonth()];
+
+  const serie = saldoDiarioMes(rows, mesOffset);
+  const previsao = previsaoSaldoMes(rows, mesOffset);
+  const saldoInicial = 0;
+  const saldoAtual = mesOffset < 0 ? previsao.saldoProjetado : previsao.saldoAtual;
+  const saldoPrevisto = previsao.saldoProjetado;
 
   return (
     <div className="panel saldo-mensal">
       <div className="saldo-mensal__header">
-        <span className="mono eyebrow">{nomeMes.toUpperCase()}</span>
+        <button
+          className="icon-button"
+          onClick={() => setMesOffset((m) => m - 1)}
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span className="mono eyebrow">
+          {nomeMes.toUpperCase()} {alvo.getFullYear() !== base.getFullYear() ? alvo.getFullYear() : ''}
+        </span>
+        <button
+          className="icon-button"
+          onClick={() => setMesOffset((m) => Math.min(m + 1, 0))}
+          disabled={mesOffset >= 0}
+          aria-label="Próximo mês"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
 
       <div className="saldo-mensal__metrics">
@@ -37,7 +66,7 @@ export default function SaldoMensalChart({ serie, saldoInicial, saldoAtual, sald
           <span className="saldo-mensal__metric-value mono">{formatBRL(saldoInicial)}</span>
         </div>
         <div className="saldo-mensal__metric">
-          <span className="saldo-mensal__metric-label"><Circle size={11} /> Saldo</span>
+          <span className="saldo-mensal__metric-label"><Circle size={11} /> {mesOffset === 0 ? 'Saldo' : 'Fechou em'}</span>
           <span className={`saldo-mensal__metric-value mono ${saldoAtual < 0 ? 'text-danger' : 'text-good'}`}>
             {formatBRL(saldoAtual)}
           </span>
@@ -91,6 +120,12 @@ export default function SaldoMensalChart({ serie, saldoInicial, saldoAtual, sald
             />
           </AreaChart>
         </ResponsiveContainer>
+      )}
+
+      {serie.length <= 1 && (
+        <p className="text-muted" style={{ fontSize: 12.5, textAlign: 'center', padding: '12px 0' }}>
+          Nenhum lançamento nesse mês.
+        </p>
       )}
     </div>
   );

@@ -108,11 +108,12 @@ export function saldoTotal(rows) {
  * Saldo do mês: confirmado até agora + o que já está projetado pro
  * restante do mês (lançamentos marcados como "projetado").
  */
-export function previsaoSaldoMes(rows) {
-  const now = new Date();
+export function previsaoSaldoMes(rows, mesOffset = 0) {
+  const base = new Date();
+  const alvo = new Date(base.getFullYear(), base.getMonth() + mesOffset, 1);
 
   const doMes = rows.filter(
-    (r) => r.data && r.data.getFullYear() === now.getFullYear() && r.data.getMonth() === now.getMonth()
+    (r) => r.data && r.data.getFullYear() === alvo.getFullYear() && r.data.getMonth() === alvo.getMonth()
   );
 
   const confirmados = doMes.filter((r) => r.status !== 'projetado');
@@ -141,13 +142,19 @@ export function previsaoSaldoMes(rows) {
  * Série do mês inteiro: saldo real (confirmado) do dia 1 até hoje, e a
  * partir de hoje continua com o saldo projetado (linha prevista) até o
  * fim do mês, considerando lançamentos futuros já marcados no calendário.
+ * mesOffset permite navegar (0 = mês atual, -1 = anterior, 1 = seguinte).
+ * Meses passados ficam inteiramente "reais"; meses futuros, inteiramente
+ * "previstos".
  */
-export function saldoDiarioMes(rows) {
-  const now = new Date();
-  const hoje = now.getDate();
-  const diasNoMes = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const mes = now.getMonth();
-  const ano = now.getFullYear();
+export function saldoDiarioMes(rows, mesOffset = 0) {
+  const base = new Date();
+  const alvo = new Date(base.getFullYear(), base.getMonth() + mesOffset, 1);
+  const mes = alvo.getMonth();
+  const ano = alvo.getFullYear();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const ehMesAtual = mesOffset === 0;
+  const ehMesPassado = mesOffset < 0;
+  const hoje = ehMesAtual ? base.getDate() : ehMesPassado ? diasNoMes : 0;
 
   const doMes = rows.filter((r) => r.data && r.data.getFullYear() === ano && r.data.getMonth() === mes);
 

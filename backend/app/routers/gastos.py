@@ -86,7 +86,12 @@ async def criar_gasto(orcamento_id: str, body: GastoInput, user: dict = Depends(
 
     data_str = body.data or datetime.now(timezone.utc).strftime("%d/%m/%Y")
 
-    db.collection("gastos").add({
+    responsavel_nome = user.get("name", user["email"])
+    if body.responsavel:
+        uid_para_nome, email_para_uid = _mapa_membros(orcamento_id)
+        _, responsavel_nome = _resolver_identidade(body.responsavel, uid_para_nome, email_para_uid)
+
+    _, doc_ref = db.collection("gastos").add({
         "orcamentoId": orcamento_id,
         "data": data_str,
         "categoria": body.categoria,
@@ -101,7 +106,7 @@ async def criar_gasto(orcamento_id: str, body: GastoInput, user: dict = Depends(
         "criadoPorNome": user.get("name", user["email"]),
         "criadoEm": datetime.now(timezone.utc),
     })
-    return {"status": "ok"}
+    return {"status": "ok", "id": doc_ref.id, "responsavelNome": responsavel_nome}
 
 
 @router.put("/orcamentos/{orcamento_id}/gastos/{gasto_id}")

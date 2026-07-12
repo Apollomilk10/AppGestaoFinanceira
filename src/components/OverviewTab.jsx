@@ -63,21 +63,13 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   const porCategoriaReceita = rankBy(receitas, 'categoria').slice(0, 5);
   const maioresReceitas = topExpenses(receitas, 5);
 
-  const serieMensal = saldoDiarioMes(rows);
-  const saldoInicial = 0;
-
   // orçamento pra recorrentes/metas: o filtrado, ou o único que a pessoa tem
   const orcamentoAlvo = filtroId || null;
 
   return (
     <div className="tab-content">
-      {/* Saldo mensal — Inicial / Saldo / Previsto */}
-      <SaldoMensalChart
-        serie={serieMensal}
-        saldoInicial={saldoInicial}
-        saldoAtual={saldo}
-        saldoPrevisto={previsao.saldoProjetado}
-      />
+      {/* Saldo mensal — Inicial / Saldo / Previsto, com navegação entre meses */}
+      <SaldoMensalChart rows={rows} />
 
       {/* Últimas despesas */}
       <RecentTransactionsList rows={rows} />
