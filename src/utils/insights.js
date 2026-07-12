@@ -246,6 +246,38 @@ export function porIntegranteMensal(rows, meses = 6) {
   return { serie, pessoas };
 }
 
+/**
+ * Simula o impacto de cada recorrente ativa num mês futuro específico
+ * (offsetAlvo >= 1), sem criar lançamentos de verdade — só pra projeção
+ * visual. Respeita quantas parcelas já foram geradas e quantas restam.
+ */
+export function projecaoMensalFutura(recorrentes, offsetAlvo, mesAtualStr) {
+  let despesas = 0;
+  let receitas = 0;
+
+  recorrentes.forEach((r) => {
+    if (!r.ativo) return;
+    const jaGerouEsteMes = r.ultimoMesGerado === mesAtualStr;
+    const proximoOffset = jaGerouEsteMes ? 1 : 0;
+
+    let incluir;
+    if (r.parcelas == null) {
+      incluir = offsetAlvo >= proximoOffset;
+    } else {
+      const restantes = Math.max(0, r.parcelas - (r.vezesGeradas || 0));
+      const ultimoOffsetValido = proximoOffset + restantes - 1;
+      incluir = offsetAlvo >= proximoOffset && offsetAlvo <= ultimoOffsetValido;
+    }
+
+    if (incluir) {
+      if (r.tipo === 'receita') receitas += r.valor;
+      else despesas += r.valor;
+    }
+  });
+
+  return { despesasMes: despesas, receitasMes: receitas, saldoAtual: receitas - despesas, saldoProjetado: receitas - despesas };
+}
+
 export function projecaoTotal(rows, orcamento) {
   const now = new Date();
   const diaDoMes = now.getDate();

@@ -69,7 +69,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   return (
     <div className="tab-content">
       {/* Saldo mensal — Inicial / Saldo / Previsto, com navegação entre meses */}
-      <SaldoMensalChart rows={rows} />
+      <SaldoMensalChart rows={rows} orcamentos={isMeuEspaco ? orcamentos : orcamentos.filter((o) => o.id === filtroId)} />
 
       {/* Últimas despesas */}
       <RecentTransactionsList rows={rows} />

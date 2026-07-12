@@ -91,8 +91,6 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
         data = d.to_dict()
         if data.get("ultimoMesGerado") == mes_atual:
             continue
-        if agora.day < data.get("diaDoMes", 1):
-            continue
 
         parcelas = data.get("parcelas")
         vezes_geradas = data.get("vezesGeradas", 0)
