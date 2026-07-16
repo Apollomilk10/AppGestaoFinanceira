@@ -1,8 +1,9 @@
-import { LayoutGrid, List, TrendingUp, Settings2 } from 'lucide-react';
+import { LayoutGrid, List, TrendingUp, Settings2, Sparkles } from 'lucide-react';
 
 const TABS = [
   { id: 'overview', label: 'Visão geral', icon: LayoutGrid },
   { id: 'transactions', label: 'Lançamentos', icon: List },
+  { id: 'wishlist', label: 'Desejos', icon: Sparkles },
   { id: 'insights', label: 'Insights', icon: TrendingUp },
   { id: 'manage', label: 'Gerenciar', icon: Settings2 },
 ];

@@ -105,12 +105,24 @@ export function saldoTotal(rows) {
 }
 
 /**
- * Saldo do mês: confirmado até agora + o que já está projetado pro
- * restante do mês (lançamentos marcados como "projetado").
+ * Soma tudo que é confirmado com data anterior ao limite informado —
+ * é o "saldo inicial" carregado de todo o histórico até ali.
+ */
+export function saldoAcumuladoAte(rows, dataLimite) {
+  return rows
+    .filter((r) => r.status !== 'projetado' && r.data && r.data < dataLimite)
+    .reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0);
+}
+
+/**
+ * Saldo do mês: agora sensibilizado pelo fechamento acumulado de TODOS os
+ * meses anteriores (não começa mais do zero) + confirmado até agora +
+ * o que já está projetado pro restante do mês.
  */
 export function previsaoSaldoMes(rows, mesOffset = 0) {
   const base = new Date();
   const alvo = new Date(base.getFullYear(), base.getMonth() + mesOffset, 1);
+  const inicial = saldoAcumuladoAte(rows, alvo);
 
   const doMes = rows.filter(
     (r) => r.data && r.data.getFullYear() === alvo.getFullYear() && r.data.getMonth() === alvo.getMonth()
@@ -125,10 +137,11 @@ export function previsaoSaldoMes(rows, mesOffset = 0) {
   const despesaProjetada = projetados.filter((r) => r.tipo !== 'receita').reduce((s, r) => s + r.valor, 0);
   const receitaProjetada = projetados.filter((r) => r.tipo === 'receita').reduce((s, r) => s + r.valor, 0);
 
-  const saldoAtual = receitasMes - despesasMes;
+  const saldoAtual = inicial + receitasMes - despesasMes;
   const saldoProjetado = saldoAtual + (receitaProjetada - despesaProjetada);
 
   return {
+    inicial,
     despesasMes,
     receitasMes,
     saldoAtual,
@@ -169,7 +182,7 @@ export function saldoDiarioMes(rows, mesOffset = 0) {
 
   const label = (dia) => `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}`;
 
-  let acumulado = 0;
+  let acumulado = saldoAcumuladoAte(rows, alvo);
   const passado = [];
   for (let dia = 1; dia <= hoje; dia++) {
     acumulado += porDiaConfirmado.get(dia) || 0;

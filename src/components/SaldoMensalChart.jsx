@@ -43,18 +43,33 @@ export default function SaldoMensalChart({ rows, orcamentos }) {
   const mesAtualStr = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
   const ehFuturo = mesOffset > 0;
 
-  const serie = ehFuturo ? [] : saldoDiarioMes(rows, mesOffset);
-  const previsao = ehFuturo
-    ? projecaoMensalFutura(recorrentes, mesOffset, mesAtualStr)
-    : previsaoSaldoMes(rows, mesOffset);
+  const previsaoMesAtual = previsaoSaldoMes(rows, 0);
 
-  const saldoInicial = 0;
-  const saldoAtual = mesOffset < 0 ? previsao.saldoProjetado : previsao.saldoAtual;
+  let previsao;
+  let saldoInicial;
+  if (ehFuturo) {
+    let acumulado = previsaoMesAtual.saldoProjetado; // fechamento previsto do mês atual
+    for (let k = 1; k < mesOffset; k++) {
+      acumulado += projecaoMensalFutura(recorrentes, k, mesAtualStr).saldoProjetado;
+    }
+    saldoInicial = acumulado; // fechamento acumulado até o mês anterior ao alvo
+    const contribAlvo = projecaoMensalFutura(recorrentes, mesOffset, mesAtualStr);
+    previsao = {
+      saldoAtual: saldoInicial + contribAlvo.saldoAtual,
+      saldoProjetado: saldoInicial + contribAlvo.saldoProjetado,
+    };
+  } else {
+    previsao = previsaoSaldoMes(rows, mesOffset);
+    saldoInicial = previsao.inicial;
+  }
+
+  const serie = ehFuturo ? [] : saldoDiarioMes(rows, mesOffset);
+  const saldoAtual = previsao.saldoAtual;
   const saldoPrevisto = previsao.saldoProjetado;
 
   const serieFutura = ehFuturo
     ? [
-        { label: '1º dia', real: null, previsto: 0 },
+        { label: '1º dia', real: null, previsto: saldoInicial },
         { label: 'fim do mês', real: null, previsto: saldoPrevisto },
       ]
     : serie;

@@ -11,6 +11,7 @@ import ProfileTab from './components/ProfileTab';
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
 import TransactionsTab from './components/TransactionsTab';
+import WishlistTab from './components/WishlistTab';
 import InsightsTab from './components/InsightsTab';
 import ManageTab from './components/ManageTab';
 import NewExpenseForm from './components/NewExpenseForm';
@@ -190,6 +191,7 @@ export default function App() {
           {activeTab === 'transactions' && (
             <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
           )}
+          {activeTab === 'wishlist' && <WishlistTab rows={rowsMemo} />}
           {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
           {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
