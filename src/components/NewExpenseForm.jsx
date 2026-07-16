@@ -225,25 +225,23 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           />
         </label>
 
-        {form.tipo === 'despesa' && (
-          <div className="field-row">
-            <label className="field">
-              <span>Categoria</span>
-              <CategoryPicker
-                value={form.categoria}
-                onChange={(v) => {
-                  update('sugestaoAplicada', true);
-                  handleCategoriaChange(v);
-                }}
-              />
-            </label>
+        <div className="field-row">
+          <label className="field">
+            <span>Categoria</span>
+            <CategoryPicker
+              value={form.categoria}
+              onChange={(v) => {
+                update('sugestaoAplicada', true);
+                handleCategoriaChange(v);
+              }}
+            />
+          </label>
 
-            <label className="field">
-              <span>Subcategoria</span>
-              <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
-            </label>
-          </div>
-        )}
+          <label className="field">
+            <span>Subcategoria</span>
+            <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
+          </label>
+        </div>
 
         <label className="field">
           <span>Quem</span>
@@ -300,7 +298,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
                 className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
                 onClick={() => update('statusLancamento', 'projetado')}
               >
-                Só projetada
+                Lista de Desejo
               </button>
             </div>
           </label>

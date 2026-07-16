@@ -28,7 +28,7 @@ export default function WishlistTab({ rows }) {
           <Sparkles size={16} className="text-muted" />
         </div>
         <p className="text-muted" style={{ fontSize: 12.5, marginTop: -8 }}>
-          Coisas planejadas, ainda não efetivadas. Marque um lançamento como "Só projetada" pra ele cair aqui.
+          Coisas planejadas, ainda não efetivadas. Marque um lançamento como "Lista de Desejo" pra ele cair aqui.
         </p>
       </div>
 
@@ -60,7 +60,7 @@ export default function WishlistTab({ rows }) {
 
         {desejos.length === 0 && (
           <p className="text-muted" style={{ fontSize: 13 }}>
-            Nada projetado ainda. Adicione um lançamento e marque como "Só projetada".
+            Nada projetado ainda. Adicione um lançamento e marque como "Lista de Desejo".
           </p>
         )}
 

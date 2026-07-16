@@ -7,6 +7,7 @@ export default function CategoryPicker({ value, onChange }) {
   const [adding, setAdding] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState('');
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState('');
 
   const options = categoryOptions();
 
@@ -14,6 +15,7 @@ export default function CategoryPicker({ value, onChange }) {
     e.preventDefault();
     if (!novaCategoria.trim()) return;
     setSaving(true);
+    setErro('');
     try {
       const chave = await addCategory(novaCategoria.trim());
       onChange(chave);
@@ -21,7 +23,7 @@ export default function CategoryPicker({ value, onChange }) {
       setAdding(false);
     } catch (err) {
       console.error(err);
-      alert('Não foi possível criar a categoria: ' + err.message);
+      setErro(err.message || 'Não foi possível criar a categoria.');
     } finally {
       setSaving(false);
     }
@@ -29,21 +31,24 @@ export default function CategoryPicker({ value, onChange }) {
 
   if (adding) {
     return (
-      <form className="inline-add" onSubmit={handleAdd}>
-        <input
-          type="text"
-          value={novaCategoria}
-          onChange={(e) => setNovaCategoria(e.target.value)}
-          placeholder="Nome da nova categoria"
-          autoFocus
-        />
-        <button type="submit" className="inline-add__confirm" disabled={saving}>
-          {saving ? '...' : 'ok'}
-        </button>
-        <button type="button" className="inline-add__cancel" onClick={() => setAdding(false)}>
-          x
-        </button>
-      </form>
+      <div>
+        <form className="inline-add" onSubmit={handleAdd}>
+          <input
+            type="text"
+            value={novaCategoria}
+            onChange={(e) => setNovaCategoria(e.target.value)}
+            placeholder="Nome da nova categoria"
+            autoFocus
+          />
+          <button type="submit" className="inline-add__confirm" disabled={saving}>
+            {saving ? '...' : 'ok'}
+          </button>
+          <button type="button" className="inline-add__cancel" onClick={() => { setAdding(false); setErro(''); }}>
+            x
+          </button>
+        </form>
+        {erro && <p className="field-error" style={{ marginTop: 4 }}>{erro}</p>}
+      </div>
     );
   }
 

@@ -7,6 +7,7 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
   const [adding, setAdding] = useState(false);
   const [novaSubcategoria, setNovaSubcategoria] = useState('');
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState('');
 
   const options = subcategoryOptions(categoria);
 
@@ -14,6 +15,7 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
     e.preventDefault();
     if (!novaSubcategoria.trim()) return;
     setSaving(true);
+    setErro('');
     try {
       const chave = await addSubcategory(categoria, novaSubcategoria.trim());
       onChange(chave);
@@ -21,7 +23,7 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
       setAdding(false);
     } catch (err) {
       console.error(err);
-      alert('Não foi possível criar a subcategoria: ' + err.message);
+      setErro(err.message || 'Não foi possível criar a subcategoria.');
     } finally {
       setSaving(false);
     }
@@ -29,28 +31,31 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
 
   if (adding) {
     return (
-      <form className="inline-add" onSubmit={handleAdd}>
-        <input
-          type="text"
-          value={novaSubcategoria}
-          onChange={(e) => setNovaSubcategoria(e.target.value)}
-          placeholder="Nome da nova subcategoria"
-          autoFocus
-        />
-        <button type="submit" className="inline-add__confirm" disabled={saving}>
-          {saving ? '...' : 'ok'}
-        </button>
-        <button type="button" className="inline-add__cancel" onClick={() => setAdding(false)}>
-          x
-        </button>
-      </form>
+      <div>
+        <form className="inline-add" onSubmit={handleAdd}>
+          <input
+            type="text"
+            value={novaSubcategoria}
+            onChange={(e) => setNovaSubcategoria(e.target.value)}
+            placeholder="Nome da nova subcategoria"
+            autoFocus
+          />
+          <button type="submit" className="inline-add__confirm" disabled={saving}>
+            {saving ? '...' : 'ok'}
+          </button>
+          <button type="button" className="inline-add__cancel" onClick={() => { setAdding(false); setErro(''); }}>
+            x
+          </button>
+        </form>
+        {erro && <p className="field-error" style={{ marginTop: 4 }}>{erro}</p>}
+      </div>
     );
   }
 
   return (
     <div className="field-with-add">
-      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={options.length === 0 && !value}>
-        {options.length === 0 && <option value="">Nenhuma ainda</option>}
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.length === 0 && <option value="">Nenhuma ainda — toque em +</option>}
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

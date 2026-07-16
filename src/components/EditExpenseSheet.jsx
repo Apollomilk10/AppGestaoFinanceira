@@ -147,23 +147,21 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
           />
         </label>
 
-        {form.tipo === 'despesa' && (
-          <div className="field-row">
-            <label className="field">
-              <span>Categoria</span>
-              <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
-            </label>
+        <div className="field-row">
+          <label className="field">
+            <span>Categoria</span>
+            <CategoryPicker value={form.categoria} onChange={handleCategoriaChange} />
+          </label>
 
-            <label className="field">
-              <span>Subcategoria</span>
-              <SubcategoryPicker
-                categoria={form.categoria}
-                value={form.etapa}
-                onChange={(v) => update('etapa', v)}
-              />
-            </label>
-          </div>
-        )}
+          <label className="field">
+            <span>Subcategoria</span>
+            <SubcategoryPicker
+              categoria={form.categoria}
+              value={form.etapa}
+              onChange={(v) => update('etapa', v)}
+            />
+          </label>
+        </div>
 
         <label className="field">
           <span>Quem</span>
@@ -194,7 +192,7 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
               className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
               onClick={() => update('statusLancamento', 'projetado')}
             >
-              Só projetada
+              Lista de Desejo
             </button>
           </div>
         </label>
