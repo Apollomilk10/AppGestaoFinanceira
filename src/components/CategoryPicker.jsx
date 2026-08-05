@@ -62,10 +62,10 @@ export default function CategoryPicker({ value, onChange }) {
             placeholder="Nome da nova categoria"
             autoFocus
           />
-          <button type="button" className="inline-add__confirm" onClick={confirmar} disabled={salvando}>
+          <button type="button" className="inline-add__confirm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmar(); }} disabled={salvando}>
             {salvando ? '...' : 'ok'}
           </button>
-          <button type="button" className="inline-add__cancel" onClick={() => { setAdding(false); setErro(''); }}>
+          <button type="button" className="inline-add__cancel" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAdding(false); setErro(''); }}>
             x
           </button>
         </div>
@@ -83,11 +83,11 @@ export default function CategoryPicker({ value, onChange }) {
           ))}
         </select>
         {podeExcluir && (
-          <button type="button" className="add-button" onClick={excluir} aria-label="Excluir categoria">
+          <button type="button" className="add-button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); excluir(); }} aria-label="Excluir categoria">
             <Trash2 size={13} />
           </button>
         )}
-        <button type="button" className="add-button" onClick={() => setAdding(true)} aria-label="Nova categoria">
+        <button type="button" className="add-button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAdding(true); }} aria-label="Nova categoria">
           <Plus size={14} />
         </button>
       </div>

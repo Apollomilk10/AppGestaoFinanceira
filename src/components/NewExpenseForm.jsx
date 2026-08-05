@@ -239,7 +239,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
         </label>
 
         <div className="field-row">
-          <label className="field">
+          <div className="field">
             <span>Categoria</span>
             <CategoryPicker
               value={form.categoria}
@@ -248,12 +248,12 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
                 handleCategoriaChange(v);
               }}
             />
-          </label>
+          </div>
 
-          <label className="field">
+          <div className="field">
             <span>Subcategoria</span>
             <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
-          </label>
+          </div>
         </div>
 
         <label className="field">

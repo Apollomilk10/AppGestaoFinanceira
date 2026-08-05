@@ -59,10 +59,10 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
             placeholder="Nome da nova subcategoria"
             autoFocus
           />
-          <button type="button" className="inline-add__confirm" onClick={confirmar} disabled={salvando}>
+          <button type="button" className="inline-add__confirm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmar(); }} disabled={salvando}>
             {salvando ? '...' : 'ok'}
           </button>
-          <button type="button" className="inline-add__cancel" onClick={() => { setAdding(false); setErro(''); }}>
+          <button type="button" className="inline-add__cancel" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAdding(false); setErro(''); }}>
             x
           </button>
         </div>
@@ -81,11 +81,11 @@ export default function SubcategoryPicker({ categoria, value, onChange }) {
           ))}
         </select>
         {podeExcluir && (
-          <button type="button" className="add-button" onClick={excluir} aria-label="Excluir subcategoria">
+          <button type="button" className="add-button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); excluir(); }} aria-label="Excluir subcategoria">
             <Trash2 size={13} />
           </button>
         )}
-        <button type="button" className="add-button" onClick={() => setAdding(true)} aria-label="Nova subcategoria">
+        <button type="button" className="add-button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAdding(true); }} aria-label="Nova subcategoria">
           <Plus size={14} />
         </button>
       </div>
