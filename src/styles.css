@@ -2166,3 +2166,44 @@ input, select, textarea {
   .tab-bar__item span { font-size: 9px; }
   .linha__valor { font-size: 14px; }
 }
+
+/* --- Marca do app --- */
+.logo {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-header__brand .app-header__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+
+.login-card__logo {
+  margin: 0 auto 4px;
+}
+
+.status-screen .logo {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 480px) {
+  .app-header__brand .app-header__title { font-size: 10px; }
+}

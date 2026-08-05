@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MembersModal from './MembersModal';
 import ManageCategoriesModal from './ManageCategoriesModal';
 import ContasModal from './ContasModal';
+import Logo from './Logo';
 
 export default function Sidebar({ open, onClose, onOpenProfile, rows = [] }) {
   const { orcamentos, filtroId, setFiltro, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
@@ -73,7 +74,10 @@ export default function Sidebar({ open, onClose, onOpenProfile, rows = [] }) {
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
       <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
         <div className="sidebar__header">
-          <span className="mono eyebrow">VER</span>
+          <span className="sidebar__brand">
+            <Logo size={26} />
+            <strong>Finanças &amp; Orçamento</strong>
+          </span>
           <button className="icon-button" onClick={onClose} aria-label="Fechar menu">
             <X size={16} />
           </button>

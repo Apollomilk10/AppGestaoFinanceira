@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock, Copy, Check, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 import { useTheme } from '../context/ThemeContext';
 
 export default function LoginScreen() {
@@ -84,6 +85,7 @@ export default function LoginScreen() {
         <div className="login-card__icon">
           <Lock size={22} strokeWidth={2.2} />
         </div>
+        <Logo size={64} className="login-card__logo" />
         <h1 className="login-card__title">Finanças & Orçamento</h1>
 
         <div className="mode-toggle">
