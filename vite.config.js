@@ -5,16 +5,17 @@ export default defineConfig({
   plugins: [react()],
   base: '/AppGestaoFinanceira/',
   build: {
-    // Separa as bibliotecas pesadas em arquivos próprios: o navegador
-    // guarda cada uma em cache independente, então uma mudança no código
-    // do app não invalida o download do Recharts/Firebase de novo.
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          charts: ['recharts'],
-          firebase: ['firebase/app', 'firebase/auth'],
-          icons: ['lucide-react'],
+        // Separa só bibliotecas grandes e independentes. React NÃO entra
+        // aqui de propósito: forçar um chunk próprio pra ele quebra a
+        // ordem de inicialização (react-dom carregava antes do react) e
+        // derrubava o app com tela branca.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+          if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
+          if (id.includes('lucide-react')) return 'icons';
         },
       },
     },
