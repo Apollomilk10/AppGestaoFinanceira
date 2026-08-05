@@ -6,6 +6,7 @@ import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { useAuth } from '../context/AuthContext';
 import { useMembros } from '../hooks/useMembros';
+import { useContas } from '../hooks/useContas';
 import { sugerirCategoria } from '../utils/autoCategorize';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
@@ -30,6 +31,7 @@ function estadoInicial(orcamentos, filtroId, uid) {
     responsavel: uid || '',
     orcamentoId: filtroId || orcamentos.find((o) => o.pessoal)?.id || orcamentos[0]?.id || '',
     sugestaoAplicada: false,
+    contaId: '',
     data: hojeISO(),
     frequencia: 'unica', // unica | recorrente | parcelado
     parcelas: '',
@@ -46,6 +48,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [errorMessage, setErrorMessage] = useState('');
   const { membros } = useMembros(form.orcamentoId);
+  const contas = useContas(form.orcamentoId);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -111,6 +114,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
             etapa: form.etapa,
             tipo: form.tipo,
             status: form.statusLancamento,
+            contaId: form.contaId || null,
           },
           { orcamentoId: form.orcamentoId }
         );
@@ -130,6 +134,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           etapa: form.etapa,
           tipo: form.tipo,
           status: form.statusLancamento,
+          contaId: form.contaId || null,
         });
       }
       setOpen(false);
@@ -254,6 +259,18 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
             ))}
           </select>
         </label>
+
+        {contas.length > 0 && (
+          <label className="field">
+            <span>Conta / cartão</span>
+            <select value={form.contaId} onChange={(e) => update('contaId', e.target.value)}>
+              <option value="">Não informar</option>
+              {contas.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <label className="field">
           <span>Repetição</span>

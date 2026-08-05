@@ -4,6 +4,7 @@ import { updateGasto } from '../services/appsScript';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useMembros } from '../hooks/useMembros';
+import { useContas } from '../hooks/useContas';
 import CategoryPicker from './CategoryPicker';
 import SubcategoryPicker from './SubcategoryPicker';
 
@@ -31,10 +32,12 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
     data: dataParaISO(row.data),
     orcamentoId: row.orcamentoId,
     statusLancamento: row.status || 'confirmado',
+    contaId: row.contaId || '',
   });
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const { membros } = useMembros(form.orcamentoId);
+  const contas = useContas(form.orcamentoId);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -64,6 +67,7 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
           etapa: form.etapa,
           tipo: form.tipo,
           status: form.statusLancamento,
+          contaId: form.contaId || null,
           ...(mudouOrcamento ? { novoOrcamentoId: form.orcamentoId } : {}),
         },
         { orcamentoId: row.orcamentoId }
@@ -176,6 +180,18 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
             ))}
           </select>
         </label>
+
+        {contas.length > 0 && (
+          <label className="field">
+            <span>Conta / cartão</span>
+            <select value={form.contaId} onChange={(e) => update('contaId', e.target.value)}>
+              <option value="">Não informar</option>
+              {contas.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <label className="field">
           <span>Situação</span>

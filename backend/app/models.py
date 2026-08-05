@@ -19,6 +19,7 @@ class GastoInput(BaseModel):
     etapa: str = "nao_especificada"
     tipo: str = "despesa"  # "despesa" ou "receita"
     status: str = "confirmado"  # "confirmado" ou "projetado"
+    contaId: Optional[str] = None  # em qual conta/cartão o dinheiro passou
     novoOrcamentoId: Optional[str] = None
 
 
@@ -52,3 +53,19 @@ class RecorrenteInput(BaseModel):
     diaDoMes: int = 1
     ativo: bool = True
     parcelas: Optional[int] = None  # None = recorrente fixa (sem fim); número = parcelado
+
+
+class ContaInput(BaseModel):
+    nome: str
+    tipo: str = "corrente"  # carteira | corrente | poupanca | cartao
+    saldoInicial: float = 0
+    # só para cartão de crédito:
+    limite: Optional[float] = None
+    diaFechamento: Optional[int] = None
+    diaVencimento: Optional[int] = None
+    cor: Optional[str] = None
+
+
+class LimiteInput(BaseModel):
+    categoriaChave: str
+    valorLimite: float

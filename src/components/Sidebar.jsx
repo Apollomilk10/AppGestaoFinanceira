@@ -4,8 +4,9 @@ import { useOrcamentos } from '../context/OrcamentosContext';
 import { useAuth } from '../context/AuthContext';
 import MembersModal from './MembersModal';
 import ManageCategoriesModal from './ManageCategoriesModal';
+import ContasModal from './ContasModal';
 
-export default function Sidebar({ open, onClose, onOpenProfile }) {
+export default function Sidebar({ open, onClose, onOpenProfile, rows = [] }) {
   const { orcamentos, filtroId, setFiltro, criarOrcamento, entrarOrcamento, excluirOrcamento } = useOrcamentos();
   const { uid } = useAuth();
   const [modo, setModo] = useState(null); // null | 'criar' | 'entrar'
@@ -17,6 +18,7 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
   const [copiadoId, setCopiadoId] = useState('');
   const [vendoIntegrantes, setVendoIntegrantes] = useState(null);
   const [vendoCategorias, setVendoCategorias] = useState(false);
+  const [vendoContas, setVendoContas] = useState(false);
 
   function fecharFormulario() {
     setModo(null);
@@ -188,6 +190,10 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
             <User size={16} />
             <span>Meu perfil</span>
           </button>
+          <button className="sidebar__action" onClick={() => setVendoContas(true)}>
+            <Wallet size={16} />
+            <span>Contas e cartões</span>
+          </button>
           <button className="sidebar__action" onClick={() => setVendoCategorias(true)}>
             <Tags size={16} />
             <span>Gerenciar categorias</span>
@@ -200,6 +206,14 @@ export default function Sidebar({ open, onClose, onOpenProfile }) {
       )}
 
       {vendoCategorias && <ManageCategoriesModal onClose={() => setVendoCategorias(false)} />}
+
+      {vendoContas && (
+        <ContasModal
+          orcamentoId={filtroId || orcamentos.find((o) => o.pessoal)?.id || orcamentos[0]?.id}
+          rows={rows}
+          onClose={() => setVendoContas(false)}
+        />
+      )}
     </>
   );
 }

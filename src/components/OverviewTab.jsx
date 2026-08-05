@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Repeat } from 'lucide-react';
 import TagIcon from './TagIcon';
 import MetasPanel from './MetasPanel';
+import LimitesPanel from './LimitesPanel';
 import RecorrentesModal from './RecorrentesModal';
 import MemberBreakdown from './MemberBreakdown';
 import MemberInsights from './MemberInsights';
@@ -161,6 +162,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
 
       {orcamentoAlvo && (
         <>
+          <LimitesPanel orcamentoId={orcamentoAlvo} rows={rows} />
           <MetasPanel orcamentoId={orcamentoAlvo} />
           <section className="secao">
             <button className="linha linha--clicavel" onClick={() => setVendoRecorrentes(true)}>

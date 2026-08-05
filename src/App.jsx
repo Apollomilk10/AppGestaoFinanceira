@@ -160,7 +160,7 @@ export default function App() {
 
   return (
     <div className="page">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onOpenProfile={() => setShowProfile(true)} />
+      <Sidebar rows={rowsMemo} open={sidebarOpen} onClose={() => setSidebarOpen(false)} onOpenProfile={() => setShowProfile(true)} />
 
       <header className="app-header">
         <div className="app-header__top">

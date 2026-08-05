@@ -6,6 +6,15 @@ const PERIODOS = [
   { id: '7d', label: '7 dias' },
   { id: '30d', label: '30 dias' },
   { id: 'month', label: 'Este mês' },
+  { id: 'lastmonth', label: 'Mês passado' },
+  { id: 'year', label: 'Este ano' },
+  { id: 'custom', label: 'Escolher datas' },
+];
+
+const TIPOS = [
+  { id: 'all', label: 'Tudo' },
+  { id: 'despesa', label: 'Só saídas' },
+  { id: 'receita', label: 'Só entradas' },
 ];
 
 export default function FilterBar({
@@ -19,6 +28,14 @@ export default function FilterBar({
   onEtapa,
   periodo,
   onPeriodo,
+  tipo,
+  onTipo,
+  contas = [],
+  contaAtiva,
+  onConta,
+  dataInicio,
+  dataFim,
+  onDatas,
 }) {
   const { getCategoryMeta, findSubcategoryMeta } = useCategories();
 
@@ -45,6 +62,51 @@ export default function FilterBar({
           </button>
         ))}
       </div>
+
+      {periodo === 'custom' && (
+        <div className="field-row" style={{ marginTop: 2 }}>
+          <label className="field">
+            <span>De</span>
+            <input type="date" value={dataInicio} onChange={(e) => onDatas(e.target.value, dataFim)} />
+          </label>
+          <label className="field">
+            <span>Até</span>
+            <input type="date" value={dataFim} onChange={(e) => onDatas(dataInicio, e.target.value)} />
+          </label>
+        </div>
+      )}
+
+      <div className="chip-row">
+        {TIPOS.map((t) => (
+          <button
+            key={t.id}
+            className={`chip ${tipo === t.id ? 'chip--active' : ''}`}
+            onClick={() => onTipo(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {contas.length > 0 && (
+        <div className="chip-row">
+          <button
+            className={`chip ${contaAtiva === 'all' ? 'chip--active' : ''}`}
+            onClick={() => onConta('all')}
+          >
+            Todas as contas
+          </button>
+          {contas.map((c) => (
+            <button
+              key={c.id}
+              className={`chip ${contaAtiva === c.id ? 'chip--active' : ''}`}
+              onClick={() => onConta(c.id)}
+            >
+              {c.nome}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="chip-row">
         <button
