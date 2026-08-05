@@ -12,7 +12,11 @@ export async function fetchCustomCategories({ orcamentoId }) {
  */
 export async function fetchCustomCategoriesAgregadas(orcamentos) {
   const listas = await Promise.all(
-    orcamentos.map((o) => fetchCustomCategories({ orcamentoId: o.id }))
+    orcamentos.map(async (o) => {
+      const rows = await fetchCustomCategories({ orcamentoId: o.id });
+      // carrega o orçamento de origem junto: é o que permite excluir depois
+      return rows.map((r) => ({ ...r, orcamentoId: o.id }));
+    })
   );
   return listas.flat();
 }

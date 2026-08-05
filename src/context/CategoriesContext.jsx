@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { fetchCustomCategoriesAgregadas } from '../services/categoriesSheet';
-import { addCategoria as addCategoriaApi } from '../services/appsScript';
+import { addCategoria as addCategoriaApi, deleteCategoria } from '../services/appsScript';
 import { useAuth } from './AuthContext';
 import { useOrcamentos } from './OrcamentosContext';
 import {
@@ -20,11 +20,13 @@ export function CategoriesProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const { orcamentos } = useOrcamentos();
   const [tree, setTree] = useState(BUILTIN_CATEGORY_TREE);
+  const [customRows, setCustomRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
     if (!isAuthenticated || orcamentos.length === 0) return;
     const custom = await fetchCustomCategoriesAgregadas(orcamentos);
+    setCustomRows(custom);
     setTree(mergeCategoryTree(custom));
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,8 +110,51 @@ export function CategoriesProvider({ children }) {
     return subcategoriaChave;
   }
 
+  /**
+   * Remove uma categoria (ou só uma subcategoria) criada por vocês.
+   * As categorias que já vêm no app não podem ser removidas.
+   */
+  async function removeCategory(categoriaChave, subcategoriaChave = '') {
+    const alvos = customRows.filter(
+      (r) =>
+        r.categoriaChave === categoriaChave &&
+        (subcategoriaChave ? r.subcategoriaChave === subcategoriaChave : true)
+    );
+    if (alvos.length === 0) throw new Error('Essa é uma categoria padrão do app e não pode ser removida.');
+
+    setTree((prev) => {
+      const copia = { ...prev };
+      if (subcategoriaChave) {
+        const cat = copia[categoriaChave];
+        if (cat) {
+          const subs = { ...cat.subcategorias };
+          delete subs[subcategoriaChave];
+          copia[categoriaChave] = { ...cat, subcategorias: subs };
+        }
+      } else {
+        delete copia[categoriaChave];
+      }
+      return copia;
+    });
+    setCustomRows((prev) => prev.filter((r) => !alvos.some((a) => a.id === r.id)));
+
+    for (const alvo of alvos) {
+      await deleteCategoria(alvo.orcamentoId, alvo.id);
+    }
+  }
+
+  function ehCustomizada(categoriaChave, subcategoriaChave = '') {
+    return customRows.some(
+      (r) =>
+        r.categoriaChave === categoriaChave &&
+        (subcategoriaChave ? r.subcategoriaChave === subcategoriaChave : true)
+    );
+  }
+
   const value = {
     tree,
+    removeCategory,
+    ehCustomizada,
     loading,
     reload,
     addCategory,
