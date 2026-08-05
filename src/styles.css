@@ -1995,3 +1995,174 @@
   display: block;
   gap: 0;
 }
+
+/* ===================================================================
+   MOBILE-FIRST — o app é usado principalmente no celular.
+   Alvos de toque generosos, nada de zoom involuntário no iOS,
+   modais como bottom sheet e barra de abas com área segura.
+   =================================================================== */
+
+/* Inputs com 16px evitam o zoom automático do Safari ao focar o campo */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Alvo de toque mínimo confortável (~44px) em tudo que é clicável */
+.icon-button,
+.add-button,
+.inline-add__confirm,
+.inline-add__cancel,
+.chip,
+.hero__nav-btn {
+  min-height: 40px;
+  min-width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 8px 14px;
+}
+
+/* Terceira opção do seletor: lista de desejos */
+.tipo-toggle__option--active.tipo-toggle__option--desejo {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .tipo-toggle__option {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11.5px;
+    padding: 10px 2px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* --- Estrutura geral --- */
+  .page {
+    padding: 12px 16px 108px;
+  }
+
+  .app-header {
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--bg);
+    backdrop-filter: blur(8px);
+  }
+
+  /* --- Hero --- */
+  .hero { padding: 4px 0 18px; }
+  .hero__valor { font-size: 40px; }
+  .hero__legenda { font-size: 12.5px; line-height: 1.5; }
+  .hero__grafico { margin: 12px -12px 0; }
+
+  /* --- Seções e linhas: toque confortável --- */
+  .secao { padding: 24px 0 0; }
+  .linha { padding: 13px 0; gap: 13px; }
+  .linha__nome { font-size: 14.5px; }
+  .linha__valor { font-size: 15px; }
+  .linha__sub { font-size: 12px; }
+
+  .par-fluxo { gap: 16px; }
+  .par-fluxo__valor { font-size: 19px; }
+  .par-fluxo__label { font-size: 11px; }
+
+  /* --- Modais viram bottom sheet de verdade --- */
+  .sheet-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .sheet {
+    max-width: 100%;
+    border-radius: 22px 22px 0 0;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    max-height: 88vh;
+    animation: sobe 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes sobe {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+
+  /* alça visual indicando que dá pra arrastar/fechar */
+  .sheet::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--panel-border);
+    margin: -6px auto 10px;
+  }
+
+  .sheet__header h2 { font-size: 17px; }
+
+  .field span { font-size: 12px; }
+  .field input, .field select { padding: 12px 13px; }
+
+  /* --- Barra de abas: respeita a área segura do iPhone --- */
+  .tab-bar {
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .tab-bar__item {
+    padding: 9px 2px;
+    gap: 3px;
+  }
+
+  .tab-bar__item span { font-size: 9.5px; }
+
+  /* --- Botão de novo lançamento: flutuante e alcançável com o polegar --- */
+  .fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    z-index: 30;
+  }
+
+  .fab span:not(.fab__icon) { display: none; }
+  .fab__icon { font-size: 26px; line-height: 1; }
+
+  /* --- Filtros roláveis na horizontal, sem quebrar linha --- */
+  .chip-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .chip-row::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; }
+
+  /* --- Menu lateral ocupa quase a tela toda --- */
+  .sidebar { width: min(88vw, 340px); }
+  .sidebar__action { padding: 13px 0; }
+
+  /* --- Gráficos menores pra caber sem rolagem --- */
+  .recharts-wrapper { font-size: 10px; }
+}
+
+@media (max-width: 380px) {
+  .page { padding: 10px 13px 104px; }
+  .hero__valor { font-size: 34px; }
+  .par-fluxo { gap: 12px; }
+  .par-fluxo__valor { font-size: 17px; }
+  .tab-bar__item span { font-size: 9px; }
+  .linha__valor { font-size: 14px; }
+}

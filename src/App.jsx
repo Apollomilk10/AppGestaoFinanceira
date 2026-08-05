@@ -139,7 +139,7 @@ export default function App() {
     );
   }
 
-  if (status === 'loading') {
+  if (status === 'loading' && rows.length === 0) {
     return <AppSkeleton />;
   }
 

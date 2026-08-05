@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Sparkles } from 'lucide-react';
 import { updateGasto } from '../services/appsScript';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -94,19 +94,27 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
         <div className="tipo-toggle">
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' ? 'tipo-toggle__option--active' : ''}`}
-            onClick={() => update('tipo', 'despesa')}
+            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, tipo: 'despesa', statusLancamento: 'confirmado' }))}
           >
             <ArrowDownCircle size={15} />
             Despesa
           </button>
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' ? 'tipo-toggle__option--active' : ''}`}
-            onClick={() => update('tipo', 'receita')}
+            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, tipo: 'receita', statusLancamento: 'confirmado' }))}
           >
             <ArrowUpCircle size={15} />
             Receita
+          </button>
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--desejo ${form.statusLancamento === 'projetado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, statusLancamento: 'projetado' }))}
+          >
+            <Sparkles size={15} />
+            Desejo
           </button>
         </div>
 
@@ -192,26 +200,6 @@ export default function EditExpenseSheet({ row, onClose, onSaved }) {
             </select>
           </label>
         )}
-
-        <label className="field">
-          <span>Situação</span>
-          <div className="mode-toggle mode-toggle--small">
-            <button
-              type="button"
-              className={form.statusLancamento === 'confirmado' ? 'mode-toggle__active' : ''}
-              onClick={() => update('statusLancamento', 'confirmado')}
-            >
-              Efetivada
-            </button>
-            <button
-              type="button"
-              className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
-              onClick={() => update('statusLancamento', 'projetado')}
-            >
-              Lista de Desejo
-            </button>
-          </div>
-        </label>
 
         {status === 'error' && <p className="field-error">{errorMessage}</p>}
 

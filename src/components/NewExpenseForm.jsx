@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Sparkles } from 'lucide-react';
 import { postGasto } from '../services/appsScript';
 import { criarRecorrente } from '../services/recorrentes';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -168,19 +168,27 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
         <div className="tipo-toggle">
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' ? 'tipo-toggle__option--active' : ''}`}
-            onClick={() => update('tipo', 'despesa')}
+            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, tipo: 'despesa', statusLancamento: 'confirmado' }))}
           >
             <ArrowDownCircle size={15} />
             Despesa
           </button>
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' ? 'tipo-toggle__option--active' : ''}`}
-            onClick={() => update('tipo', 'receita')}
+            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, tipo: 'receita', statusLancamento: 'confirmado' }))}
           >
             <ArrowUpCircle size={15} />
             Receita
+          </button>
+          <button
+            type="button"
+            className={`tipo-toggle__option tipo-toggle__option--desejo ${form.statusLancamento === 'projetado' ? 'tipo-toggle__option--active' : ''}`}
+            onClick={() => setForm((p) => ({ ...p, tipo: 'despesa', statusLancamento: 'projetado', frequencia: 'unica' }))}
+          >
+            <Sparkles size={15} />
+            Desejo
           </button>
         </div>
 
@@ -272,6 +280,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           </label>
         )}
 
+        {form.statusLancamento !== 'projetado' && (
         <label className="field">
           <span>Repetição</span>
           <div className="mode-toggle mode-toggle--small">
@@ -298,27 +307,6 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
             </button>
           </div>
         </label>
-
-        {form.frequencia === 'unica' && (
-          <label className="field">
-            <span>Situação</span>
-            <div className="mode-toggle mode-toggle--small">
-              <button
-                type="button"
-                className={form.statusLancamento === 'confirmado' ? 'mode-toggle__active' : ''}
-                onClick={() => update('statusLancamento', 'confirmado')}
-              >
-                Efetivada
-              </button>
-              <button
-                type="button"
-                className={form.statusLancamento === 'projetado' ? 'mode-toggle__active' : ''}
-                onClick={() => update('statusLancamento', 'projetado')}
-              >
-                Lista de Desejo
-              </button>
-            </div>
-          </label>
         )}
 
         {form.frequencia === 'parcelado' && (
