@@ -7,13 +7,15 @@ import { useOrcamentos } from './context/OrcamentosContext';
 import { useTheme } from './context/ThemeContext';
 import LoginScreen from './components/LoginScreen';
 import Sidebar from './components/Sidebar';
-import ProfileTab from './components/ProfileTab';
+import { lazy, Suspense } from 'react';
+import AppSkeleton from './components/AppSkeleton';
+const ProfileTab = lazy(() => import('./components/ProfileTab'));
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
 import TransactionsTab from './components/TransactionsTab';
-import WishlistTab from './components/WishlistTab';
-import InsightsTab from './components/InsightsTab';
-import ManageTab from './components/ManageTab';
+const WishlistTab = lazy(() => import('./components/WishlistTab'));
+const InsightsTab = lazy(() => import('./components/InsightsTab'));
+const ManageTab = lazy(() => import('./components/ManageTab'));
 import NewExpenseForm from './components/NewExpenseForm';
 import RefreshButton from './components/RefreshButton';
 import FeedbackButton from './components/FeedbackButton';
@@ -138,7 +140,7 @@ export default function App() {
   }
 
   if (status === 'loading') {
-    return <StatusScreen title="Carregando seus dados…" />;
+    return <AppSkeleton />;
   }
 
   if (status === 'error') {
@@ -182,9 +184,11 @@ export default function App() {
       </header>
 
       {showProfile ? (
-        <ProfileTab onBack={() => setShowProfile(false)} />
+        <Suspense fallback={<AppSkeleton />}>
+          <ProfileTab onBack={() => setShowProfile(false)} />
+        </Suspense>
       ) : (
-        <>
+        <Suspense fallback={<AppSkeleton />}>
           {activeTab === 'overview' && (
             <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} />
           )}
@@ -199,7 +203,7 @@ export default function App() {
 
           <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
           <FeedbackButton />
-        </>
+        </Suspense>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Check, Circle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { saldoDiarioMes, previsaoSaldoMes, projecaoMensalFutura } from '../utils/insights';
 import { fetchRecorrentes } from '../services/recorrentes';
 
@@ -8,166 +8,141 @@ const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
-const MAX_MESES_FUTUROS = 12;
+const MAX_FUTURO = 12;
 
-function formatBRL(value) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function brl(v) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function ChartTooltip({ active, payload, label }) {
+function Tip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
-  const ponto = payload[0].payload;
-  const valor = ponto.real ?? ponto.previsto;
+  const p = payload[0].payload;
+  const v = p.real ?? p.previsto;
   return (
     <div className="chart-tooltip mono">
       <strong>{label}</strong>
-      <span>{formatBRL(valor)}{ponto.real === null ? ' (previsto)' : ''}</span>
+      <span>{brl(v)}{p.real == null ? ' · previsto' : ''}</span>
     </div>
   );
 }
 
 export default function SaldoMensalChart({ rows, orcamentos }) {
-  const [mesOffset, setMesOffset] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [recorrentes, setRecorrentes] = useState([]);
 
+  const idsOrcamentos = orcamentos?.map((o) => o.id).join(',') || '';
+
   useEffect(() => {
-    if (!orcamentos || orcamentos.length === 0) return;
+    if (!orcamentos?.length) return;
     Promise.all(orcamentos.map((o) => fetchRecorrentes(o.id)))
-      .then((listas) => setRecorrentes(listas.flat()))
-      .catch((err) => console.error('Falha ao carregar recorrentes pra projeção:', err));
-  }, [orcamentos]);
+      .then((l) => setRecorrentes(l.flat()))
+      .catch((e) => console.error('Recorrentes para projeção:', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsOrcamentos]);
 
   const base = new Date();
-  const alvo = new Date(base.getFullYear(), base.getMonth() + mesOffset, 1);
-  const nomeMes = MESES[alvo.getMonth()];
+  const alvo = new Date(base.getFullYear(), base.getMonth() + offset, 1);
   const mesAtualStr = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
-  const ehFuturo = mesOffset > 0;
+  const futuro = offset > 0;
 
-  const previsaoMesAtual = previsaoSaldoMes(rows, 0);
-
-  let previsao;
-  let saldoInicial;
-  if (ehFuturo) {
-    let acumulado = previsaoMesAtual.saldoProjetado; // fechamento previsto do mês atual
-    for (let k = 1; k < mesOffset; k++) {
-      acumulado += projecaoMensalFutura(recorrentes, k, mesAtualStr).saldoProjetado;
+  const { inicial, saldo, previsto, serie } = useMemo(() => {
+    if (futuro) {
+      let acum = previsaoSaldoMes(rows, 0).saldoProjetado;
+      for (let k = 1; k < offset; k++) {
+        acum += projecaoMensalFutura(recorrentes, k, mesAtualStr).saldoProjetado;
+      }
+      const mes = projecaoMensalFutura(recorrentes, offset, mesAtualStr);
+      return {
+        inicial: acum,
+        saldo: acum + mes.saldoAtual,
+        previsto: acum + mes.saldoProjetado,
+        serie: [
+          { label: 'início', real: null, previsto: acum },
+          { label: 'fim', real: null, previsto: acum + mes.saldoProjetado },
+        ],
+      };
     }
-    saldoInicial = acumulado; // fechamento acumulado até o mês anterior ao alvo
-    const contribAlvo = projecaoMensalFutura(recorrentes, mesOffset, mesAtualStr);
-    previsao = {
-      saldoAtual: saldoInicial + contribAlvo.saldoAtual,
-      saldoProjetado: saldoInicial + contribAlvo.saldoProjetado,
+    const p = previsaoSaldoMes(rows, offset);
+    return {
+      inicial: p.inicial,
+      saldo: p.saldoAtual,
+      previsto: p.saldoProjetado,
+      serie: saldoDiarioMes(rows, offset),
     };
-  } else {
-    previsao = previsaoSaldoMes(rows, mesOffset);
-    saldoInicial = previsao.inicial;
-  }
+  }, [rows, recorrentes, offset, futuro, mesAtualStr]);
 
-  const serie = ehFuturo ? [] : saldoDiarioMes(rows, mesOffset);
-  const saldoAtual = previsao.saldoAtual;
-  const saldoPrevisto = previsao.saldoProjetado;
-
-  const serieFutura = ehFuturo
-    ? [
-        { label: '1º dia', real: null, previsto: saldoInicial },
-        { label: 'fim do mês', real: null, previsto: saldoPrevisto },
-      ]
-    : serie;
+  const anoDiferente = alvo.getFullYear() !== base.getFullYear();
 
   return (
-    <div className="panel saldo-mensal">
-      <div className="saldo-mensal__header">
-        <button className="icon-button" onClick={() => setMesOffset((m) => m - 1)} aria-label="Mês anterior">
-          <ChevronLeft size={16} />
+    <section className="hero">
+      <div className="hero__nav">
+        <button className="hero__nav-btn" onClick={() => setOffset((o) => o - 1)} aria-label="Mês anterior">
+          <ChevronLeft size={17} strokeWidth={2.4} />
         </button>
-        <span className="mono eyebrow">
-          {nomeMes.toUpperCase()} {alvo.getFullYear() !== base.getFullYear() ? alvo.getFullYear() : ''}
+        <span className="hero__mes">
+          {MESES[alvo.getMonth()]}{anoDiferente ? ` ${alvo.getFullYear()}` : ''}
         </span>
         <button
-          className="icon-button"
-          onClick={() => setMesOffset((m) => Math.min(m + 1, MAX_MESES_FUTUROS))}
-          disabled={mesOffset >= MAX_MESES_FUTUROS}
+          className="hero__nav-btn"
+          onClick={() => setOffset((o) => Math.min(o + 1, MAX_FUTURO))}
+          disabled={offset >= MAX_FUTURO}
           aria-label="Próximo mês"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={17} strokeWidth={2.4} />
         </button>
       </div>
 
-      {ehFuturo && (
-        <p className="text-muted" style={{ fontSize: 11.5, margin: '-6px 0 2px', textAlign: 'center' }}>
-          projeção com base nas contas recorrentes ativas
-        </p>
-      )}
+      <div className={`hero__valor ${saldo < 0 ? 'hero__valor--negativo' : ''}`}>{brl(saldo)}</div>
 
-      <div className="saldo-mensal__metrics">
-        <div className="saldo-mensal__metric">
-          <span className="saldo-mensal__metric-label"><Check size={11} /> Inicial</span>
-          <span className="saldo-mensal__metric-value mono">{formatBRL(saldoInicial)}</span>
-        </div>
-        <div className="saldo-mensal__metric">
-          <span className="saldo-mensal__metric-label">
-            <Circle size={11} /> {mesOffset === 0 ? 'Saldo' : ehFuturo ? 'Neste mês' : 'Fechou em'}
-          </span>
-          <span className={`saldo-mensal__metric-value mono ${saldoAtual < 0 ? 'text-danger' : 'text-good'}`}>
-            {formatBRL(saldoAtual)}
-          </span>
-        </div>
-        <div className="saldo-mensal__metric">
-          <span className="saldo-mensal__metric-label"><Clock size={11} /> Previsto</span>
-          <span className={`saldo-mensal__metric-value mono ${saldoPrevisto < 0 ? 'text-danger' : 'text-good'}`}>
-            {formatBRL(saldoPrevisto)}
-          </span>
-        </div>
-      </div>
+      <p className="hero__legenda">
+        {futuro ? 'Projetado a partir das suas contas fixas. ' : ''}
+        Começou o mês com <strong>{brl(inicial)}</strong> · deve fechar em{' '}
+        <strong>{brl(previsto)}</strong>
+      </p>
 
-      {serieFutura.length > 1 && (
-        <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={serieFutura} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="saldoRealFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--ink)" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="var(--ink)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="saldoPrevistoFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--muted)" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="var(--muted)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis
-              dataKey="label"
-              tick={{ fill: 'var(--muted)', fontSize: 10 }}
-              axisLine={{ stroke: 'var(--panel-border)' }}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis hide />
-            <Tooltip content={<ChartTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="real"
-              stroke="var(--ink)"
-              strokeWidth={2}
-              fill="url(#saldoRealFill)"
-              connectNulls={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="previsto"
-              stroke="var(--muted)"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              fill="url(#saldoPrevistoFill)"
-              connectNulls={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      {serie.length > 1 && (
+        <div className="hero__grafico">
+          <ResponsiveContainer width="100%" height={128}>
+            <AreaChart data={serie} margin={{ top: 6, right: 8, left: 8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillReal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--muted)', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+                minTickGap={40}
+              />
+              <YAxis hide domain={['dataMin', 'dataMax']} />
+              <Tooltip content={<Tip />} />
+              <Area
+                type="monotone"
+                dataKey="real"
+                stroke="var(--accent)"
+                strokeWidth={2.4}
+                fill="url(#fillReal)"
+                connectNulls={false}
+                dot={false}
+              />
+              <Area
+                type="monotone"
+                dataKey="previsto"
+                stroke="var(--muted)"
+                strokeWidth={1.8}
+                strokeDasharray="3 4"
+                fill="none"
+                connectNulls={false}
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       )}
-
-      {serieFutura.length <= 1 && (
-        <p className="text-muted" style={{ fontSize: 12.5, textAlign: 'center', padding: '12px 0' }}>
-          Nenhum lançamento nesse mês.
-        </p>
-      )}
-    </div>
+    </section>
   );
 }
