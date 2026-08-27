@@ -1,0 +1,3 @@
+# O backend FastAPI roda no Render, não na Vercel. Sem isso a Vercel
+# detecta o requirements.txt e tenta montar um projeto Python.
+backend/
