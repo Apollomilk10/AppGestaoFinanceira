@@ -36,6 +36,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       totalReceitas: receitas.reduce((s, r) => s + r.valor, 0),
       porCategoria: rankBy(despesas, 'categoria').slice(0, 6),
       porCategoriaReceita: rankBy(receitas, 'categoria').slice(0, 3),
+      saldo: receitas.reduce((s, r) => s + r.valor, 0) - despesas.reduce((s, r) => s + r.valor, 0),
       media: averageDaily(despesas),
       maior: biggestExpense(despesas),
       recentes: [...rows]
@@ -47,24 +48,53 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   const orcamentosVisiveis = isMeuEspaco ? orcamentos : orcamentos.filter((o) => o.id === filtroId);
   const orcamentoAlvo = filtroId || null;
 
+  // Quanto do que entrou já foi gasto. É a pergunta que se faz todo dia
+  // num orçamento doméstico, e nenhum número sozinho respondia isso.
+  const consumido =
+    dados.totalReceitas > 0
+      ? Math.min(100, (dados.totalDespesas / dados.totalReceitas) * 100)
+      : dados.totalDespesas > 0
+        ? 100
+        : 0;
+  const negativo = dados.saldo < 0;
+
   return (
     <div className="tab-content tab-content--fluido">
+      <section className="balanco">
+        <span className="balanco__label">Sobra do período</span>
+        <strong className={`balanco__valor ${negativo ? 'balanco__valor--negativo' : ''}`}>
+          {negativo ? '−' : ''}{brl(Math.abs(dados.saldo))}
+        </strong>
+
+        <div className="balanco__trilha" role="img"
+          aria-label={`${consumido.toFixed(0)}% do que entrou já foi gasto`}>
+          <div className="balanco__trilha-fill" style={{ width: `${consumido}%` }} />
+        </div>
+
+        <div className="balanco__pes">
+          <span className="balanco__pe">
+            <i className="balanco__ponto balanco__ponto--entrou" />
+            Entrou <b>{brl(dados.totalReceitas)}</b>
+          </span>
+          <span className="balanco__pe">
+            <i className="balanco__ponto balanco__ponto--saiu" />
+            Saiu <b>{brl(dados.totalDespesas)}</b>
+          </span>
+        </div>
+      </section>
+
       <SaldoMensalChart rows={rows} orcamentos={orcamentosVisiveis} />
 
       <section className="secao">
-        <h2 className="secao__titulo">Fluxo do período</h2>
+        <h2 className="secao__titulo">Ritmo de gasto</h2>
         <div className="par-fluxo">
-          <div className="par-fluxo__item">
-            <span className="par-fluxo__label">Entrou</span>
-            <span className="par-fluxo__valor text-good">{brl(dados.totalReceitas)}</span>
-          </div>
-          <div className="par-fluxo__item">
-            <span className="par-fluxo__label">Saiu</span>
-            <span className="par-fluxo__valor text-danger">{brl(dados.totalDespesas)}</span>
-          </div>
           <div className="par-fluxo__item">
             <span className="par-fluxo__label">Média por dia</span>
             <span className="par-fluxo__valor">{brl(dados.media)}</span>
+          </div>
+          <div className="par-fluxo__item">
+            <span className="par-fluxo__label">Já usado do que entrou</span>
+            <span className="par-fluxo__valor">{consumido.toFixed(0)}%</span>
           </div>
         </div>
       </section>

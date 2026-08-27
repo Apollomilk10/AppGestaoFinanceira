@@ -2,12 +2,12 @@
   "name": "Finanças & Orçamento",
   "short_name": "Finanças",
   "description": "Controle de gastos e receitas compartilhado, por orçamento.",
-  "start_url": "/AppGestaoFinanceira/",
-  "scope": "/AppGestaoFinanceira/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5efe6",
-  "theme_color": "#2e5a44",
+  "background_color": "#EEF1F5",
+  "theme_color": "#17325C",
   "icons": [
     {
       "src": "icon-192.png",
@@ -27,5 +27,10 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "id": "/",
+  "categories": [
+    "finance",
+    "productivity"
   ]
 }

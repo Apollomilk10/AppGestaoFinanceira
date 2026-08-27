@@ -184,7 +184,6 @@ export default function App() {
             </button>
           </div>
         </div>
-        {!showProfile && <TabBar active={activeTab} onChange={setActiveTab} />}
       </header>
 
       {showProfile ? (
@@ -203,12 +202,12 @@ export default function App() {
           {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
           {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
-          <footer className="footer mono">atualiza automaticamente a cada 60s</footer>
-
           <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
           <FeedbackButton />
         </Suspense>
       )}
+
+      {!showProfile && <TabBar active={activeTab} onChange={setActiveTab} />}
     </div>
   );
 }

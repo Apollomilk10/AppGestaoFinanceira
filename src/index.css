@@ -1,44 +1,95 @@
-:root {
-  /* ===== Design System "Fluxo" — Modo claro: "Warm Cashmere" ===== */
-  --bg: #f5efe6;
-  --bg-grid-line: rgba(43, 41, 39, 0.035);
-  --panel: #ffffff;
-  --panel-border: rgba(0, 0, 0, 0.06);
-  --ink: #2b2927;
-  --muted: #7a726b;
-  --accent: #2e5a44; /* verde sálvia — marca, botões, positivo */
-  --accent-soft: rgba(46, 90, 68, 0.1);
-  --on-accent: #ffffff;
-  --secondary: #c8815f; /* terracota — destaques pontuais */
-  --secondary-soft: rgba(200, 129, 95, 0.12);
-  --measure: #2e5a44;
-  --good: #2e5a44;
-  --danger: #b23b3b; /* vermelho tijolo — alerta/perigo */
-  --danger-soft: rgba(178, 59, 59, 0.1);
+/* ===================================================================
+   Design System "Cofre" — fintech sóbrio.
+   Fundo frio e neutro, uma única cor de marca (azul-marinho) usada com
+   disciplina, e os únicos pontos de cor saturada reservados para o que
+   realmente importa num app de dinheiro: entrou (verde) e saiu (vermelho).
+   Nada de textura de fundo, nada de gradiente decorativo.
+   =================================================================== */
 
-  /* Tipografia */
-  --font-display: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+:root {
+  /* --- Superfícies --- */
+  --bg: #eef1f5;
+  --panel: #ffffff;
+  --panel-2: #f4f6f9;   /* superfície aninhada dentro de um card */
+  --hairline: rgba(13, 20, 32, 0.08);
+
+  /* --- Texto --- */
+  --ink: #0d1420;
+  --muted: #626d7d;
+
+  /* --- Marca --- */
+  --brand: #17325c;
+  --brand-soft: rgba(23, 50, 92, 0.08);
+  --on-brand: #ffffff;
+
+  /* --- Interação --- */
+  --link: #2e6be6;
+
+  /* --- Semântica de dinheiro --- */
+  --good: #0b8a5b;
+  --good-soft: rgba(11, 138, 91, 0.1);
+  --danger: #c33a3a;
+  --danger-soft: rgba(195, 58, 58, 0.1);
+
+  /* --- Elevação --- */
+  --shadow-sm: 0 1px 2px rgba(13, 20, 32, 0.05);
+  --shadow-md: 0 2px 4px rgba(13, 20, 32, 0.04), 0 12px 28px rgba(13, 20, 32, 0.06);
+  --shadow-nav: 0 -1px 0 var(--hairline), 0 -8px 24px rgba(13, 20, 32, 0.05);
+
+  /* --- Raios --- */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+
+  /* --- Tipografia ---
+     Archivo para números e títulos: grotesca levemente condensada, com
+     figuras tabulares — colunas de valores alinham sozinhas.
+     Instrument Sans para texto de interface.
+     Mono só para código de convite, onde caractere a caractere importa. */
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ---------------------------------------------------------------
+     Compatibilidade: o CSS antigo (2.200 linhas) referencia estes
+     nomes. Em vez de reescrever tudo, eles apontam para os tokens
+     novos — assim cada componente herda o visual novo sem edição.
+     --------------------------------------------------------------- */
+  --panel-border: var(--hairline);
+  --accent: var(--brand);
+  --accent-soft: var(--brand-soft);
+  --on-accent: var(--on-brand);
+  --secondary: var(--link);
+  --secondary-soft: rgba(46, 107, 230, 0.1);
+  --measure: var(--brand);
 }
 
-/* ===== Modo escuro: "Cyber Dark" ===== */
 [data-theme='dark'] {
-  --bg: #060913;
-  --bg-grid-line: rgba(255, 255, 255, 0.035);
-  --panel: #141c2f;
-  --panel-border: rgba(255, 255, 255, 0.08);
-  --ink: #f8fafc;
-  --muted: #94a3b8;
-  --accent: #00f59b; /* verde menta elétrico — marca, botões, positivo */
-  --accent-soft: rgba(0, 245, 155, 0.12);
-  --on-accent: #060913;
-  --secondary: #7c3aed; /* roxo neon — destaques pontuais */
-  --secondary-soft: rgba(124, 58, 237, 0.16);
-  --measure: #00f59b;
-  --good: #00f59b;
-  --danger: #ff6b00; /* laranja neon — alerta/perigo */
-  --danger-soft: rgba(255, 107, 0, 0.14);
+  --bg: #0b0e13;
+  --panel: #141922;
+  --panel-2: #1b212c;
+  --hairline: rgba(255, 255, 255, 0.09);
+
+  --ink: #e9edf3;
+  --muted: #8b95a5;
+
+  --brand: #6d9dff;
+  --brand-soft: rgba(109, 157, 255, 0.14);
+  --on-brand: #06090f;
+
+  --link: #7fb0ff;
+
+  --good: #2fbe86;
+  --good-soft: rgba(47, 190, 134, 0.14);
+  --danger: #f0736f;
+  --danger-soft: rgba(240, 115, 111, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.4);
+  --shadow-nav: 0 -1px 0 var(--hairline), 0 -8px 24px rgba(0, 0, 0, 0.5);
+
+  --secondary-soft: rgba(127, 176, 255, 0.14);
 }
 
 * {
@@ -54,20 +105,20 @@ body,
 body {
   margin: 0;
   background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   transition: background-color 0.25s ease, color 0.25s ease;
+  overscroll-behavior-y: none;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -75,16 +126,28 @@ a {
   color: inherit;
 }
 
-::selection {
-  background: var(--accent-soft);
-  color: var(--ink);
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+/* Todo número de dinheiro alinha em coluna, sem dançar quando o valor muda */
+.mono,
+.linha__valor,
+.par-fluxo__valor,
+.hero__valor,
+.stat-card__value,
+.transaction-row__valor,
+.saldo-mensal__metric-value {
+  font-variant-numeric: tabular-nums;
 }
 
 .mono {
   font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
