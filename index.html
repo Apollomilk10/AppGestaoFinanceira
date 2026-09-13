@@ -27,6 +27,34 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Captador de erro instalado ANTES do bundle. Um erro na avaliação dos
+         módulos (ex.: Firebase sem chave) acontece antes de qualquer código
+         do app rodar, então o handler precisa estar aqui, em script clássico,
+         ou a tela fica branca sem explicação. -->
+    <script>
+      window.__casaErro = function (titulo, detalhe) {
+        var raiz = document.getElementById('root');
+        if (!raiz || raiz.dataset.falha) return;
+        raiz.dataset.falha = '1';
+        raiz.innerHTML =
+          '<div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:26px;font-family:system-ui,sans-serif;color:#0f2b25;background:#f4f7f5;line-height:1.5">' +
+          '<strong style="font-size:19px">' + titulo + '</strong>' +
+          '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#6b807a;background:#fff;padding:14px;border-radius:14px;margin:0">' + detalhe + '</pre></div>';
+      };
+      window.addEventListener('error', function (e) {
+        window.__casaErro('O app não conseguiu iniciar', String((e.error && e.error.stack) || e.message || e));
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__casaErro('O app não conseguiu iniciar', String((e.reason && e.reason.stack) || e.reason));
+      });
+      setTimeout(function () {
+        var raiz = document.getElementById('root');
+        if (raiz && raiz.children.length === 0) {
+          window.__casaErro('O app carregou mas não renderizou', 'Nenhum erro foi capturado. O bundle baixou, mas o React não montou nada na tela.');
+        }
+      }, 6000);
+    </script>
   </head>
   <body>
     <div id="root"></div>
