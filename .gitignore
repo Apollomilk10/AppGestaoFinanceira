@@ -11,3 +11,6 @@ android/app/build/
 android/build/
 android/local.properties
 android/.idea/
+
+# Saída de build da Vercel (gerada no deploy)
+.vercel/
