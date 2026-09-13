@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico Casa+</title></head>
+<body style="font-family:system-ui;padding:24px;background:#f4f7f5;color:#0f2b25">
+<h1 style="font-size:20px">Hospedagem OK</h1>
+<p id="js">JavaScript não rodou.</p>
+<p id="bundle">Testando o bundle do app…</p>
+<script>
+  document.getElementById('js').textContent = 'JavaScript rodou nesta página.';
+  fetch('/').then(r => r.text()).then(html => {
+    const m = html.match(/assets\/(index-[A-Za-z0-9_-]+\.js)/);
+    if (!m) { document.getElementById('bundle').textContent = 'Não achei o bundle no index.'; return; }
+    return fetch('/assets/' + m[1]).then(r => {
+      document.getElementById('bundle').textContent =
+        'Bundle ' + m[1] + ' → HTTP ' + r.status + ' (' + (r.headers.get('content-type') || 'sem tipo') + ')';
+    });
+  }).catch(e => { document.getElementById('bundle').textContent = 'Erro ao buscar o bundle: ' + e; });
+</script>
+</body></html>
