@@ -9,7 +9,7 @@
  * da Build Output API, o preset deixa de importar: a Vercel serve o que
  * está em .vercel/output, ponto.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 
 const config = {
   version: 3,
@@ -29,5 +29,8 @@ const config = {
 };
 
 mkdirSync('.vercel/output', { recursive: true });
+// Espelha o dist em .vercel/output/static: assim a Vercel encontra a saída
+// tanto pelo caminho clássico (outputDirectory) quanto pela Build Output API.
+cpSync('dist', '.vercel/output/static', { recursive: true });
 writeFileSync('.vercel/output/config.json', JSON.stringify(config, null, 2));
 console.log('Build Output API: .vercel/output/config.json escrito');
