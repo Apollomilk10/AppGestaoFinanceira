@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Repeat } from 'lucide-react';
+import { Repeat, Plus, Target, BarChart3 } from 'lucide-react';
 import TagIcon from './TagIcon';
 import MetasPanel from './MetasPanel';
 import LimitesPanel from './LimitesPanel';
@@ -21,7 +21,7 @@ function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export default function OverviewTab({ rows, onSelectCategory }) {
+export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
   const { getCategoryMeta } = useCategories();
   const { orcamentos, filtroId, isMeuEspaco } = useOrcamentos();
   const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
@@ -81,6 +81,21 @@ export default function OverviewTab({ rows, onSelectCategory }) {
             Saiu <b>{brl(dados.totalDespesas)}</b>
           </span>
         </div>
+      </section>
+
+      <section className="atalhos">
+        <button className="atalho" onClick={() => window.dispatchEvent(new Event('casa:novo-gasto'))}>
+          <span className="atalho__icone"><Plus size={18} strokeWidth={2.4} /></span>
+          Adicionar gasto
+        </button>
+        <button className="atalho" onClick={() => onNavigate?.('wishlist')}>
+          <span className="atalho__icone"><Target size={18} strokeWidth={2.4} /></span>
+          Nova meta
+        </button>
+        <button className="atalho" onClick={() => onNavigate?.('insights')}>
+          <span className="atalho__icone"><BarChart3 size={18} strokeWidth={2.4} /></span>
+          Ver relatórios
+        </button>
       </section>
 
       <SaldoMensalChart rows={rows} orcamentos={orcamentosVisiveis} />

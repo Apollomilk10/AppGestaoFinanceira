@@ -21,6 +21,9 @@ import NewExpenseForm from './components/NewExpenseForm';
 import RefreshButton from './components/RefreshButton';
 import FeedbackButton from './components/FeedbackButton';
 import './styles.css';
+import './casa.css';
+import Onboarding, { jaViuOnboarding } from './components/Onboarding';
+import PrimeiroEspaco from './components/PrimeiroEspaco';
 
 const REFRESH_MS = 60_000;
 
@@ -46,6 +49,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [travado, setTravado] = useState(false);
+  const [onboardingPendente, setOnboardingPendente] = useState(() => !jaViuOnboarding());
 
   useEffect(() => {
     if (!orcamentosLoading) {
@@ -96,6 +100,11 @@ export default function App() {
 
   const rowsMemo = useMemo(() => rows, [rows]);
 
+  // Antes de qualquer coisa: quem nunca abriu o app vê a marca e a proposta.
+  if (onboardingPendente && !isAuthenticated) {
+    return <Onboarding onFinish={() => setOnboardingPendente(false)} />;
+  }
+
   if (initializing) {
     return <StatusScreen title="Carregando…" />;
   }
@@ -131,13 +140,10 @@ export default function App() {
     );
   }
 
+  // Sem nenhum espaço: em vez de um beco sem saída, a pessoa escolhe
+  // aqui se vai usar sozinha ou dividir com alguém.
   if (orcamentos.length === 0) {
-    return (
-      <StatusScreen
-        title="Você ainda não está em nenhum orçamento"
-        subtitle="Abra o menu lateral pra criar um novo ou entrar com um código."
-      />
-    );
+    return <PrimeiroEspaco />;
   }
 
   if (status === 'loading' && rows.length === 0) {
@@ -170,7 +176,7 @@ export default function App() {
           </button>
           <span className="app-header__brand">
             <Logo size={22} />
-            <span className="mono eyebrow app-header__title">
+            <span className="app-header__title">
               {isMeuEspaco ? 'MEU ESPAÇO' : filtro?.nome || 'ORÇAMENTO'}
             </span>
           </span>
@@ -193,7 +199,7 @@ export default function App() {
       ) : (
         <Suspense fallback={<AppSkeleton />}>
           {activeTab === 'overview' && (
-            <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} />
+            <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} onNavigate={setActiveTab} />
           )}
           {activeTab === 'transactions' && (
             <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
@@ -217,7 +223,7 @@ function StatusScreen({ title, subtitle, isError, children }) {
     <div className="status-screen">
       <Logo size={56} />
       {!isError && <Spinner size={28} />}
-      <span className="mono status-screen__eyebrow">FINANÇAS & ORÇAMENTO</span>
+      <span className="mono status-screen__eyebrow">CASA+</span>
       <h1 className={isError ? 'text-accent' : ''}>{title}</h1>
       {subtitle && <p className="text-muted">{subtitle}</p>}
       {children}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Sparkles } from 'lucide-react';
 import { postGasto } from '../services/appsScript';
 import { criarRecorrente } from '../services/recorrentes';
@@ -74,6 +74,15 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
     setForm(estadoInicial(orcamentos, filtroId, uid));
     setOpen(true);
   }
+
+  // O atalho "Adicionar gasto" da Home abre este mesmo formulário.
+  // Evento de janela em vez de prop: o formulário vive no App, o atalho
+  // vive dentro da aba — passar callback atravessaria três componentes.
+  useEffect(() => {
+    const abrir = () => handleOpen();
+    window.addEventListener('casa:novo-gasto', abrir);
+    return () => window.removeEventListener('casa:novo-gasto', abrir);
+  });
 
   async function handleSubmit(e) {
     e.preventDefault();

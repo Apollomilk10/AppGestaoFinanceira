@@ -1,0 +1,19 @@
+{
+  "appId": "com.casamais.financas",
+  "appName": "Casa+",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#0A2C26"
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "backgroundColor": "#0A2C26",
+      "androidSplashResourceName": "splash",
+      "launchAutoHide": true,
+      "launchShowDuration": 800
+    }
+  }
+}

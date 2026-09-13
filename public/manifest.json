@@ -1,13 +1,13 @@
 {
-  "name": "Finanças & Orçamento",
-  "short_name": "Finanças",
-  "description": "Controle de gastos e receitas compartilhado, por orçamento.",
+  "name": "Casa+ — Finanças da casa",
+  "short_name": "Casa+",
+  "description": "Acompanhe seus gastos, defina orçamentos e planeje suas metas, sozinho ou a dois.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#EEF1F5",
-  "theme_color": "#17325C",
+  "background_color": "#0A2C26",
+  "theme_color": "#0F3B33",
   "icons": [
     {
       "src": "icon-192.png",

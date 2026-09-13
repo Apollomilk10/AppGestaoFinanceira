@@ -10,7 +10,7 @@
 export const BUILTIN_CATEGORY_TREE = {
   obra_reforma: {
     label: 'Obra - Reforma',
-    color: '#f2622e',
+    color: '#f97316',
     icon: 'HardHat',
     subcategorias: {
       eletrica: { label: 'Elétrica', icon: 'Zap' },
@@ -25,7 +25,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   moradia: {
     label: 'Moradia',
-    color: '#4fb3ff',
+    color: '#3b82f6',
     icon: 'Home',
     subcategorias: {
       aluguel: { label: 'Aluguel', icon: 'Key' },
@@ -37,7 +37,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   alimentacao: {
     label: 'Alimentação',
-    color: '#6fbf8b',
+    color: '#f59e0b',
     icon: 'UtensilsCrossed',
     subcategorias: {
       mercado: { label: 'Mercado', icon: 'ShoppingCart' },
@@ -47,7 +47,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   transporte: {
     label: 'Transporte',
-    color: '#e8b84b',
+    color: '#ef4444',
     icon: 'Car',
     subcategorias: {
       combustivel: { label: 'Combustível', icon: 'Fuel' },
@@ -58,7 +58,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   saude: {
     label: 'Saúde',
-    color: '#ff5d7a',
+    color: '#ec4899',
     icon: 'HeartPulse',
     subcategorias: {
       consultas: { label: 'Consultas', icon: 'Stethoscope' },
@@ -68,7 +68,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   lazer: {
     label: 'Lazer',
-    color: '#b98cf0',
+    color: '#a855f7',
     icon: 'Popcorn',
     subcategorias: {
       streaming: { label: 'Streaming', icon: 'Tv' },
@@ -78,7 +78,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   compras: {
     label: 'Compras',
-    color: '#4fd1c5',
+    color: '#14b8a6',
     icon: 'ShoppingBag',
     subcategorias: {
       roupas: { label: 'Roupas', icon: 'Shirt' },
@@ -88,7 +88,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   educacao: {
     label: 'Educação',
-    color: '#8fa3c0',
+    color: '#6366f1',
     icon: 'GraduationCap',
     subcategorias: {
       cursos: { label: 'Cursos', icon: 'GraduationCap' },
@@ -97,7 +97,7 @@ export const BUILTIN_CATEGORY_TREE = {
   },
   outro: {
     label: 'Outro',
-    color: '#9a9aa0',
+    color: '#94a3b8',
     icon: 'MoreHorizontal',
     subcategorias: {},
   },

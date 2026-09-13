@@ -1,95 +1,112 @@
 /* ===================================================================
-   Design System "Cofre" — fintech sóbrio.
-   Fundo frio e neutro, uma única cor de marca (azul-marinho) usada com
-   disciplina, e os únicos pontos de cor saturada reservados para o que
-   realmente importa num app de dinheiro: entrou (verde) e saiu (vermelho).
-   Nada de textura de fundo, nada de gradiente decorativo.
+   Design System "Casa+" — o app de finanças da casa.
+   Verde-escuro de marca (confiança, dinheiro parado), verde-menta como
+   única cor de ação (o que te move: começar, salvar, progredir) e um
+   fundo quase branco levemente esverdeado. Cor saturada só onde o
+   dinheiro pede: entrou, saiu, e a identidade de cada categoria.
    =================================================================== */
 
 :root {
   /* --- Superfícies --- */
-  --bg: #eef1f5;
+  --bg: #f4f7f5;
   --panel: #ffffff;
-  --panel-2: #f4f6f9;   /* superfície aninhada dentro de um card */
-  --hairline: rgba(13, 20, 32, 0.08);
+  --panel-2: #f1f5f2;   /* superfície aninhada dentro de um card */
+  --hairline: rgba(15, 59, 51, 0.09);
 
   /* --- Texto --- */
-  --ink: #0d1420;
-  --muted: #626d7d;
+  --ink: #0f2b25;
+  --muted: #6b807a;
 
   /* --- Marca --- */
-  --brand: #17325c;
-  --brand-soft: rgba(23, 50, 92, 0.08);
+  --brand: #0f3b33;          /* verde-escuro: splash, botões sólidos, sidebar */
+  --brand-deep: #0a2c26;
+  --brand-soft: rgba(15, 59, 51, 0.07);
   --on-brand: #ffffff;
 
+  /* --- Ação (menta) --- */
+  --mint: #4ec79b;
+  --mint-strong: #2fae82;
+  --mint-soft: rgba(78, 199, 155, 0.14);
+  --on-mint: #06251e;
+
   /* --- Interação --- */
-  --link: #2e6be6;
+  --link: #1d8f73;
 
   /* --- Semântica de dinheiro --- */
-  --good: #0b8a5b;
-  --good-soft: rgba(11, 138, 91, 0.1);
-  --danger: #c33a3a;
-  --danger-soft: rgba(195, 58, 58, 0.1);
+  --good: #1f9d6b;
+  --good-soft: rgba(31, 157, 107, 0.12);
+  --danger: #e0574f;
+  --danger-soft: rgba(224, 87, 79, 0.12);
 
-  /* --- Elevação --- */
-  --shadow-sm: 0 1px 2px rgba(13, 20, 32, 0.05);
-  --shadow-md: 0 2px 4px rgba(13, 20, 32, 0.04), 0 12px 28px rgba(13, 20, 32, 0.06);
-  --shadow-nav: 0 -1px 0 var(--hairline), 0 -8px 24px rgba(13, 20, 32, 0.05);
+  /* --- Categorias (mesma paleta do layout) --- */
+  --cat-moradia: #3b82f6;
+  --cat-alimentacao: #f59e0b;
+  --cat-transporte: #ef4444;
+  --cat-lazer: #a855f7;
+  --cat-saude: #ec4899;
+  --cat-outros: #94a3b8;
 
-  /* --- Raios --- */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  /* --- Elevação: sombra suave e larga, nada de borda dura --- */
+  --shadow-sm: 0 1px 2px rgba(15, 59, 51, 0.04);
+  --shadow-md: 0 2px 6px rgba(15, 59, 51, 0.04), 0 14px 34px rgba(15, 59, 51, 0.07);
+  --shadow-nav: 0 -1px 0 var(--hairline), 0 -10px 28px rgba(15, 59, 51, 0.06);
+
+  /* --- Raios: cartões bem arredondados, como no layout --- */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 26px;
 
   /* --- Tipografia ---
-     Archivo para números e títulos: grotesca levemente condensada, com
-     figuras tabulares — colunas de valores alinham sozinhas.
-     Instrument Sans para texto de interface.
-     Mono só para código de convite, onde caractere a caractere importa. */
-  --font-display: 'Archivo', system-ui, sans-serif;
-  --font-body: 'Instrument Sans', system-ui, sans-serif;
+     Plus Jakarta Sans para títulos e números (geométrica, com figuras
+     tabulares), Inter para texto de interface, mono só para códigos. */
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* ---------------------------------------------------------------
-     Compatibilidade: o CSS antigo (2.200 linhas) referencia estes
-     nomes. Em vez de reescrever tudo, eles apontam para os tokens
-     novos — assim cada componente herda o visual novo sem edição.
+     Compatibilidade: o CSS antigo referencia estes nomes. Eles
+     apontam pros tokens novos — cada componente herda o visual novo
+     sem precisar ser editado.
      --------------------------------------------------------------- */
   --panel-border: var(--hairline);
   --accent: var(--brand);
   --accent-soft: var(--brand-soft);
   --on-accent: var(--on-brand);
-  --secondary: var(--link);
-  --secondary-soft: rgba(46, 107, 230, 0.1);
+  --secondary: var(--mint-strong);
+  --secondary-soft: var(--mint-soft);
   --measure: var(--brand);
 }
 
 [data-theme='dark'] {
-  --bg: #0b0e13;
-  --panel: #141922;
-  --panel-2: #1b212c;
+  --bg: #08120f;
+  --panel: #11201b;
+  --panel-2: #182a24;
   --hairline: rgba(255, 255, 255, 0.09);
 
-  --ink: #e9edf3;
-  --muted: #8b95a5;
+  --ink: #e6f0ec;
+  --muted: #8ba39b;
 
-  --brand: #6d9dff;
-  --brand-soft: rgba(109, 157, 255, 0.14);
-  --on-brand: #06090f;
+  --brand: #4ec79b;
+  --brand-deep: #0a2c26;
+  --brand-soft: rgba(78, 199, 155, 0.14);
+  --on-brand: #06251e;
 
-  --link: #7fb0ff;
+  --mint: #4ec79b;
+  --mint-strong: #6ad7b0;
+  --mint-soft: rgba(78, 199, 155, 0.16);
+  --on-mint: #06251e;
 
-  --good: #2fbe86;
-  --good-soft: rgba(47, 190, 134, 0.14);
+  --link: #6ad7b0;
+
+  --good: #35c68d;
+  --good-soft: rgba(53, 198, 141, 0.15);
   --danger: #f0736f;
-  --danger-soft: rgba(240, 115, 111, 0.14);
+  --danger-soft: rgba(240, 115, 111, 0.15);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.4);
-  --shadow-nav: 0 -1px 0 var(--hairline), 0 -8px 24px rgba(0, 0, 0, 0.5);
-
-  --secondary-soft: rgba(127, 176, 255, 0.14);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 14px 32px rgba(0, 0, 0, 0.45);
+  --shadow-nav: 0 -1px 0 var(--hairline), 0 -10px 28px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -131,6 +148,7 @@ a {
 .linha__valor,
 .par-fluxo__valor,
 .hero__valor,
+.balanco__valor,
 .stat-card__value,
 .transaction-row__valor,
 .saldo-mensal__metric-value {
@@ -142,12 +160,12 @@ a {
 }
 
 ::selection {
-  background: var(--brand-soft);
+  background: var(--mint-soft);
   color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--link);
+  outline: 2px solid var(--mint-strong);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
