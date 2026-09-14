@@ -1,13 +1,33 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
+/**
+ * Configuração do app web no Firebase.
+ *
+ * Os valores ficam aqui como padrão de propósito. Essa configuração não é
+ * segredo: ela é embutida no bundle de qualquer front-end e fica visível
+ * pra quem abrir o código-fonte da página. Quem protege os dados são as
+ * regras do Firestore e a lista de domínios autorizados no Authentication.
+ *
+ * A variável de ambiente continua tendo prioridade — serve pra apontar o
+ * app pra outro projeto do Firebase sem tocar no código.
+ */
+const PADRAO = {
+  apiKey: 'AIzaSyAtpgnvCGoeF-kg5ZJBlLq2qKFNabVY-9U',
+  authDomain: 'appfinanca-c0eb2.firebaseapp.com',
+  projectId: 'appfinanca-c0eb2',
+  storageBucket: 'appfinanca-c0eb2.firebasestorage.app',
+  messagingSenderId: '822108688816',
+  appId: '1:822108688816:web:14f8720271ceb9acd40675',
+};
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || PADRAO.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || PADRAO.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || PADRAO.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || PADRAO.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || PADRAO.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || PADRAO.appId,
 };
 
 /**
