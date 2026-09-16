@@ -1,6 +1,14 @@
 import { auth } from '../firebaseConfig';
 
-const API_URL = import.meta.env.VITE_API_URL;
+/**
+ * Backend FastAPI publicado no Render. Fica fixo aqui como padrão pelo mesmo
+ * motivo da configuração do Firebase: não é segredo — é o endereço público da
+ * API, que qualquer requisição do app expõe. A variável de ambiente continua
+ * ganhando, pra apontar o front pra uma API local ou de teste sem tocar no código.
+ */
+const API_PADRAO = 'https://appgestaofinanceira-api.onrender.com';
+
+const API_URL = import.meta.env.VITE_API_URL || API_PADRAO;
 
 async function authHeader() {
   const user = auth.currentUser;
