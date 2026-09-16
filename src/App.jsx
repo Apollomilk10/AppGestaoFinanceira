@@ -113,6 +113,16 @@ export default function App() {
     return <LoginScreen />;
   }
 
+  if (orcamentosError) {
+    return (
+      <StatusScreen title="Não foi possível carregar seus orçamentos" subtitle={orcamentosError} isError>
+        <button className="primary-button" onClick={reloadOrcamentos}>
+          Tentar de novo
+        </button>
+      </StatusScreen>
+    );
+  }
+
   if (orcamentosLoading || (status === 'loading' && orcamentos.length === 0)) {
     if (travado) {
       return (
@@ -128,16 +138,6 @@ export default function App() {
       );
     }
     return <StatusScreen title="Carregando seu espaço…" />;
-  }
-
-  if (orcamentosError) {
-    return (
-      <StatusScreen title="Não foi possível carregar seus orçamentos" subtitle={orcamentosError} isError>
-        <button className="primary-button" onClick={reloadOrcamentos}>
-          Tentar de novo
-        </button>
-      </StatusScreen>
-    );
   }
 
   // Sem nenhum espaço: em vez de um beco sem saída, a pessoa escolhe
