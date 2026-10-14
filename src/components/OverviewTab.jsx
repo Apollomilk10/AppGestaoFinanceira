@@ -1,55 +1,47 @@
-import { useMemo, useState } from 'react';
-import { Repeat, Plus, Target, BarChart3 } from 'lucide-react';
+import { useMemo } from 'react';
 import TagIcon from './TagIcon';
-import MetasPanel from './MetasPanel';
-import LimitesPanel from './LimitesPanel';
-import RecorrentesModal from './RecorrentesModal';
-import MemberBreakdown from './MemberBreakdown';
-import MemberInsights from './MemberInsights';
-import SaldoMensalChart from './SaldoMensalChart';
 import { useCategories } from '../context/CategoriesContext';
-import { useOrcamentos } from '../context/OrcamentosContext';
-import {
-  averageDaily,
-  biggestExpense,
-  rankBy,
-  filtrarDespesas,
-  filtrarReceitas,
-} from '../utils/insights';
+import { rankBy, filtrarDespesas, filtrarReceitas } from '../utils/insights';
 
 function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
+/**
+ * Início: só o essencial do mês — quanto sobrou, onde o dinheiro foi e o
+ * que entrou/saiu por último. Adicionar lançamento é o botão flutuante;
+ * contas fixas e limites moraram na aba Orçamentos.
+ */
+export default function OverviewTab({ rows, onSelectCategory }) {
   const { getCategoryMeta } = useCategories();
-  const { orcamentos, filtroId, isMeuEspaco } = useOrcamentos();
-  const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
 
   const dados = useMemo(() => {
-    const despesas = filtrarDespesas(rows);
-    const receitas = filtrarReceitas(rows);
+    const agora = new Date();
+    const doMes = rows.filter(
+      (r) =>
+        r.status !== 'projetado' &&
+        r.data &&
+        r.data.getFullYear() === agora.getFullYear() &&
+        r.data.getMonth() === agora.getMonth()
+    );
+    const despesas = filtrarDespesas(doMes);
+    const receitas = filtrarReceitas(doMes);
+    const totalDespesas = despesas.reduce((s, r) => s + r.valor, 0);
+    const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
     return {
-      despesas,
-      receitas,
-      totalDespesas: despesas.reduce((s, r) => s + r.valor, 0),
-      totalReceitas: receitas.reduce((s, r) => s + r.valor, 0),
-      porCategoria: rankBy(despesas, 'categoria').slice(0, 6),
-      porCategoriaReceita: rankBy(receitas, 'categoria').slice(0, 3),
-      saldo: receitas.reduce((s, r) => s + r.valor, 0) - despesas.reduce((s, r) => s + r.valor, 0),
-      media: averageDaily(despesas),
-      maior: biggestExpense(despesas),
-      recentes: [...rows]
+      mes: agora.toLocaleDateString('pt-BR', { month: 'long' }),
+      totalDespesas,
+      totalReceitas,
+      saldo: totalReceitas - totalDespesas,
+      porCategoria: rankBy(despesas, 'categoria').slice(0, 5),
+      recentes: rows
+        .filter((r) => r.status !== 'projetado')
         .sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0))
-        .slice(0, 6),
+        .slice(0, 5),
     };
   }, [rows]);
 
-  const orcamentosVisiveis = isMeuEspaco ? orcamentos : orcamentos.filter((o) => o.id === filtroId);
-  const orcamentoAlvo = filtroId || null;
-
-  // Quanto do que entrou já foi gasto. É a pergunta que se faz todo dia
-  // num orçamento doméstico, e nenhum número sozinho respondia isso.
+  // Quanto do que entrou no mês já foi gasto.
   const consumido =
     dados.totalReceitas > 0
       ? Math.min(100, (dados.totalDespesas / dados.totalReceitas) * 100)
@@ -61,13 +53,16 @@ export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
   return (
     <div className="tab-content tab-content--fluido">
       <section className="balanco">
-        <span className="balanco__label">Sobra do período</span>
+        <span className="balanco__label">Sobra de {dados.mes}</span>
         <strong className={`balanco__valor ${negativo ? 'balanco__valor--negativo' : ''}`}>
           {negativo ? '−' : ''}{brl(Math.abs(dados.saldo))}
         </strong>
 
-        <div className="balanco__trilha" role="img"
-          aria-label={`${consumido.toFixed(0)}% do que entrou já foi gasto`}>
+        <div
+          className="balanco__trilha"
+          role="img"
+          aria-label={`${consumido.toFixed(0)}% do que entrou já foi gasto`}
+        >
           <div className="balanco__trilha-fill" style={{ width: `${consumido}%` }} />
         </div>
 
@@ -83,36 +78,13 @@ export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
         </div>
       </section>
 
-      <section className="atalhos">
-        <button className="atalho" onClick={() => window.dispatchEvent(new Event('casa:novo-gasto'))}>
-          <span className="atalho__icone"><Plus size={18} strokeWidth={2.4} /></span>
-          Adicionar gasto
-        </button>
-        <button className="atalho" onClick={() => onNavigate?.('wishlist')}>
-          <span className="atalho__icone"><Target size={18} strokeWidth={2.4} /></span>
-          Nova meta
-        </button>
-        <button className="atalho" onClick={() => onNavigate?.('insights')}>
-          <span className="atalho__icone"><BarChart3 size={18} strokeWidth={2.4} /></span>
-          Ver relatórios
-        </button>
-      </section>
-
-      <SaldoMensalChart rows={rows} orcamentos={orcamentosVisiveis} />
-
-      <section className="secao">
-        <h2 className="secao__titulo">Ritmo de gasto</h2>
-        <div className="par-fluxo">
-          <div className="par-fluxo__item">
-            <span className="par-fluxo__label">Média por dia</span>
-            <span className="par-fluxo__valor">{brl(dados.media)}</span>
-          </div>
-          <div className="par-fluxo__item">
-            <span className="par-fluxo__label">Já usado do que entrou</span>
-            <span className="par-fluxo__valor">{consumido.toFixed(0)}%</span>
-          </div>
-        </div>
-      </section>
+      {dados.recentes.length === 0 && (
+        <section className="secao">
+          <p className="text-muted" style={{ textAlign: 'center', padding: '28px 8px' }}>
+            Nada por aqui ainda. Toque no <b>+</b> para adicionar sua primeira receita ou gasto.
+          </p>
+        </section>
+      )}
 
       {dados.porCategoria.length > 0 && (
         <section className="secao">
@@ -156,7 +128,6 @@ export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
                   <span className="linha__sub">
                     {row.data ? row.data.toLocaleDateString('pt-BR') : ''}
                     {row.responsavelNome ? ` · ${row.responsavelNome}` : ''}
-                    {row.status === 'projetado' ? ' · desejo' : ''}
                   </span>
                 </div>
                 <span className={`linha__valor ${receita ? 'text-good' : ''}`}>
@@ -166,63 +137,6 @@ export default function OverviewTab({ rows, onSelectCategory, onNavigate }) {
             );
           })}
         </section>
-      )}
-
-      {dados.receitas.length > 0 && (
-        <section className="secao">
-          <h2 className="secao__titulo">De onde veio</h2>
-          {dados.porCategoriaReceita.map((item) => {
-            const meta = getCategoryMeta(item.key);
-            return (
-              <div key={item.key} className="linha">
-                <TagIcon meta={meta} />
-                <div className="linha__corpo">
-                  <span className="linha__nome">{meta.label}</span>
-                  <span className="linha__sub">{item.pct.toFixed(0)}% das entradas</span>
-                </div>
-                <span className="linha__valor text-good">+{brl(item.valor)}</span>
-              </div>
-            );
-          })}
-        </section>
-      )}
-
-      {dados.maior && (
-        <section className="secao">
-          <h2 className="secao__titulo">Maior gasto do período</h2>
-          <div className="linha">
-            <div className="linha__corpo">
-              <span className="linha__nome">{dados.maior.descricao || 'Sem descrição'}</span>
-              <span className="linha__sub">
-                {dados.maior.data ? dados.maior.data.toLocaleDateString('pt-BR') : ''}
-              </span>
-            </div>
-            <span className="linha__valor">{brl(dados.maior.valor)}</span>
-          </div>
-        </section>
-      )}
-
-      <MemberBreakdown orcamentos={orcamentosVisiveis} />
-      <MemberInsights rows={dados.despesas} />
-
-      {orcamentoAlvo && (
-        <>
-          <LimitesPanel orcamentoId={orcamentoAlvo} rows={rows} />
-          <MetasPanel orcamentoId={orcamentoAlvo} />
-          <section className="secao">
-            <button className="linha linha--clicavel" onClick={() => setVendoRecorrentes(true)}>
-              <Repeat size={17} className="text-muted" />
-              <div className="linha__corpo">
-                <span className="linha__nome">Contas fixas e vencimentos</span>
-                <span className="linha__sub">ver, criar e acompanhar parcelas</span>
-              </div>
-            </button>
-          </section>
-        </>
-      )}
-
-      {vendoRecorrentes && orcamentoAlvo && (
-        <RecorrentesModal orcamentoId={orcamentoAlvo} onClose={() => setVendoRecorrentes(false)} />
       )}
     </div>
   );

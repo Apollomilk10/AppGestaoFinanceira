@@ -14,12 +14,10 @@ const ProfileTab = lazy(() => import('./components/ProfileTab'));
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
 import TransactionsTab from './components/TransactionsTab';
-const WishlistTab = lazy(() => import('./components/WishlistTab'));
 const InsightsTab = lazy(() => import('./components/InsightsTab'));
 const ManageTab = lazy(() => import('./components/ManageTab'));
 import NewExpenseForm from './components/NewExpenseForm';
 import RefreshButton from './components/RefreshButton';
-import FeedbackButton from './components/FeedbackButton';
 import './styles.css';
 import './casa.css';
 import Onboarding, { jaViuOnboarding } from './components/Onboarding';
@@ -199,17 +197,15 @@ export default function App() {
       ) : (
         <Suspense fallback={<AppSkeleton />}>
           {activeTab === 'overview' && (
-            <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} onNavigate={setActiveTab} />
+            <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} onNavigate={setActiveTab} onChanged={load} />
           )}
           {activeTab === 'transactions' && (
             <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
           )}
-          {activeTab === 'wishlist' && <WishlistTab rows={rowsMemo} />}
           {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
           {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
 
           <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
-          <FeedbackButton />
         </Suspense>
       )}
 

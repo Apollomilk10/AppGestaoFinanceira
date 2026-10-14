@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Repeat } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
+import LimitesPanel from './LimitesPanel';
+import RecorrentesModal from './RecorrentesModal';
+import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
 export default function ManageTab({ rows, onChanged }) {
   const { getCategoryMeta, getSubcategoryMeta } = useCategories();
+  const { filtroId } = useOrcamentos();
+  const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -31,6 +36,21 @@ export default function ManageTab({ rows, onChanged }) {
 
   return (
     <div className="tab-content">
+      {filtroId && (
+        <>
+          <LimitesPanel orcamentoId={filtroId} rows={rows} />
+          <section className="secao">
+            <button className="linha linha--clicavel" onClick={() => setVendoRecorrentes(true)}>
+              <Repeat size={17} className="text-muted" />
+              <div className="linha__corpo">
+                <span className="linha__nome">Contas fixas e vencimentos</span>
+                <span className="linha__sub">ver, criar e acompanhar parcelas</span>
+              </div>
+            </button>
+          </section>
+        </>
+      )}
+
       <div className="panel">
         <h2 className="panel__title">Todos os lançamentos ({rows.length})</h2>
 
@@ -96,6 +116,10 @@ export default function ManageTab({ rows, onChanged }) {
 
       {editing && (
         <EditExpenseSheet row={editing} onClose={() => setEditing(null)} onSaved={onChanged} />
+      )}
+
+      {vendoRecorrentes && filtroId && (
+        <RecorrentesModal orcamentoId={filtroId} onClose={() => setVendoRecorrentes(false)} />
       )}
     </div>
   );

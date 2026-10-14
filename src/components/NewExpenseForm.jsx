@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowDownCircle, ArrowUpCircle, Sparkles } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, ChevronDown, Plus } from 'lucide-react';
 import { postGasto } from '../services/appsScript';
 import { criarRecorrente } from '../services/recorrentes';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -44,6 +44,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
   const { nome, uid } = useAuth();
   const { subcategoryOptions } = useCategories();
   const [open, setOpen] = useState(false);
+  const [maisOpcoes, setMaisOpcoes] = useState(false);
   const [form, setForm] = useState(() => estadoInicial(orcamentos, filtroId, uid));
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [errorMessage, setErrorMessage] = useState('');
@@ -72,6 +73,7 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
 
   function handleOpen() {
     setForm(estadoInicial(orcamentos, filtroId, uid));
+    setMaisOpcoes(false);
     setOpen(true);
   }
 
@@ -157,9 +159,8 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
 
   if (!open) {
     return (
-      <button className="fab" onClick={handleOpen} aria-label="Novo lançamento">
-        <span className="fab__icon">+</span>
-        <span>Novo lançamento</span>
+      <button className="fab" onClick={handleOpen} aria-label="Adicionar receita ou gasto">
+        <Plus size={28} strokeWidth={2.6} />
       </button>
     );
   }
@@ -177,40 +178,34 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
         <div className="tipo-toggle">
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            className={`tipo-toggle__option tipo-toggle__option--despesa ${form.tipo === 'despesa' ? 'tipo-toggle__option--active' : ''}`}
             onClick={() => setForm((p) => ({ ...p, tipo: 'despesa', statusLancamento: 'confirmado' }))}
           >
             <ArrowDownCircle size={15} />
-            Despesa
+            Gasto
           </button>
           <button
             type="button"
-            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' && form.statusLancamento === 'confirmado' ? 'tipo-toggle__option--active' : ''}`}
+            className={`tipo-toggle__option tipo-toggle__option--receita ${form.tipo === 'receita' ? 'tipo-toggle__option--active' : ''}`}
             onClick={() => setForm((p) => ({ ...p, tipo: 'receita', statusLancamento: 'confirmado' }))}
           >
             <ArrowUpCircle size={15} />
             Receita
           </button>
-          <button
-            type="button"
-            className={`tipo-toggle__option tipo-toggle__option--desejo ${form.statusLancamento === 'projetado' ? 'tipo-toggle__option--active' : ''}`}
-            onClick={() => setForm((p) => ({ ...p, tipo: 'despesa', statusLancamento: 'projetado', frequencia: 'unica' }))}
-          >
-            <Sparkles size={15} />
-            Desejo
-          </button>
         </div>
 
-        <label className="field">
-          <span>Salvar no orçamento</span>
-          <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
-            {orcamentos.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        {orcamentos.length > 1 && (
+          <label className="field">
+            <span>Salvar no orçamento</span>
+            <select value={form.orcamentoId} onChange={(e) => update('orcamentoId', e.target.value)}>
+              {orcamentos.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <div className="field-row">
           <label className="field">
@@ -247,22 +242,15 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           />
         </label>
 
-        <div className="field-row">
-          <div className="field">
-            <span>Categoria</span>
-            <CategoryPicker
-              value={form.categoria}
-              onChange={(v) => {
-                update('sugestaoAplicada', true);
-                handleCategoriaChange(v);
-              }}
-            />
-          </div>
-
-          <div className="field">
-            <span>Subcategoria</span>
-            <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
-          </div>
+        <div className="field">
+          <span>Categoria</span>
+          <CategoryPicker
+            value={form.categoria}
+            onChange={(v) => {
+              update('sugestaoAplicada', true);
+              handleCategoriaChange(v);
+            }}
+          />
         </div>
 
         <label className="field">
@@ -277,6 +265,23 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           </select>
         </label>
 
+        <button
+          type="button"
+          className="mais-opcoes"
+          onClick={() => setMaisOpcoes((v) => !v)}
+          aria-expanded={maisOpcoes}
+        >
+          Mais opções
+          <ChevronDown size={16} className={maisOpcoes ? 'mais-opcoes__seta mais-opcoes__seta--aberta' : 'mais-opcoes__seta'} />
+        </button>
+
+        {maisOpcoes && (
+          <div className="mais-opcoes__corpo">
+        <div className="field">
+          <span>Subcategoria</span>
+          <SubcategoryPicker categoria={form.categoria} value={form.etapa} onChange={(v) => update('etapa', v)} />
+        </div>
+
         {contas.length > 0 && (
           <label className="field">
             <span>Conta / cartão</span>
@@ -289,7 +294,6 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           </label>
         )}
 
-        {form.statusLancamento !== 'projetado' && (
         <label className="field">
           <span>Repetição</span>
           <div className="mode-toggle mode-toggle--small">
@@ -316,7 +320,6 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
             </button>
           </div>
         </label>
-        )}
 
         {form.frequencia === 'parcelado' && (
           <label className="field">
@@ -342,6 +345,8 @@ export default function NewExpenseForm({ onSaved, onSavedRow }) {
           <p className="text-muted" style={{ fontSize: 12 }}>
             Vai se repetir todo dia {form.data.split('-')[2]} de cada mês, por {form.parcelas}x, e parar sozinho.
           </p>
+        )}
+          </div>
         )}
 
         {status === 'error' && (

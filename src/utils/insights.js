@@ -343,3 +343,78 @@ export function cumulativeSeries(rows) {
       return { label: new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), total: acumulado };
     });
 }
+
+// ===================== RELATÓRIOS (por pessoa e acumulado) =====================
+
+const SEM_RESPONSAVEL = 'Sem responsável';
+
+/** Últimos N meses (do mais antigo ao mais recente), com rótulo curto. */
+function ultimosMeses(n) {
+  const now = new Date();
+  return Array.from({ length: n }).map((_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
+    return {
+      ano: d.getFullYear(),
+      mes: d.getMonth(),
+      inicio: d,
+      fim: new Date(d.getFullYear(), d.getMonth() + 1, 1),
+      label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+    };
+  });
+}
+
+/**
+ * Total por pessoa em cada um dos últimos N meses, só do que está
+ * confirmado (desejos/projetados ficam de fora). `tipo` é 'receita'
+ * (entradas) ou 'despesa' (saídas). Devolve { serie, pessoas } pronto
+ * pra um gráfico de barras agrupadas.
+ */
+export function mensalPorPessoa(rows, tipo, meses = 6) {
+  const base = rows.filter(
+    (r) =>
+      r.status !== 'projetado' &&
+      r.data &&
+      (tipo === 'receita' ? r.tipo === 'receita' : r.tipo !== 'receita')
+  );
+  const nomeDe = (r) => r.responsavelNome || SEM_RESPONSAVEL;
+
+  // pessoas ordenadas por quem mais movimentou, pra cor e legenda estáveis
+  const totais = new Map();
+  base.forEach((r) => totais.set(nomeDe(r), (totais.get(nomeDe(r)) || 0) + r.valor));
+  const pessoas = Array.from(totais.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome]) => nome);
+
+  const serie = ultimosMeses(meses).map((b) => {
+    const linha = { label: b.label };
+    pessoas.forEach((nome) => {
+      linha[nome] = base
+        .filter((r) => nomeDe(r) === nome && r.data >= b.inicio && r.data < b.fim)
+        .reduce((s, r) => s + r.valor, 0);
+    });
+    return linha;
+  });
+
+  return { serie, pessoas };
+}
+
+/**
+ * Acumulado no tempo: quanto já entrou e quanto já saiu, somando tudo
+ * desde o primeiro lançamento até o fim de cada mês. A diferença entre as
+ * duas linhas é o saldo guardado.
+ */
+export function acumuladoMensal(rows, meses = 12) {
+  const confirmados = rows.filter((r) => r.status !== 'projetado' && r.data);
+  const buckets = ultimosMeses(meses);
+  const soma = (lista) => lista.reduce((s, r) => s + r.valor, 0);
+
+  let entradas = soma(confirmados.filter((r) => r.tipo === 'receita' && r.data < buckets[0].inicio));
+  let saidas = soma(confirmados.filter((r) => r.tipo !== 'receita' && r.data < buckets[0].inicio));
+
+  return buckets.map((b) => {
+    const doMes = confirmados.filter((r) => r.data >= b.inicio && r.data < b.fim);
+    entradas += soma(doMes.filter((r) => r.tipo === 'receita'));
+    saidas += soma(doMes.filter((r) => r.tipo !== 'receita'));
+    return { label: b.label, entradas, saidas, saldo: entradas - saidas };
+  });
+}
