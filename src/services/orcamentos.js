@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from './api';
+import { apiGet, apiPost, apiPut, apiDelete } from './api';
 
 export async function fetchOrcamentos() {
   const result = await apiGet('/orcamentos');
@@ -20,6 +20,10 @@ export async function excluirOrcamento(orcamentoId) {
 export async function fetchMeusGastos() {
   const result = await apiGet('/meus-gastos');
   return result.rows;
+}
+
+export function definirCorMembro(orcamentoId, uid, cor) {
+  return apiPut(`/orcamentos/${orcamentoId}/membros/${uid}/cor`, { cor });
 }
 
 export async function fetchMembros(orcamentoId) {

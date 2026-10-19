@@ -12,9 +12,8 @@ import {
   YAxis,
 } from 'recharts';
 import { mensalPorPessoa, acumuladoMensal, acumuladoPorPessoa } from '../utils/insights';
+import { useCoresIntegrantes } from '../hooks/useCoresIntegrantes';
 
-// Uma cor fixa por pessoa (mesma ordem nos dois gráficos), legível no claro e no escuro.
-const CORES_PESSOAS = ['#2fae82', '#f0a63a', '#5b8def', '#c06bd9', '#e0574f'];
 
 function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -54,7 +53,7 @@ const EIXO_Y = {
   tickFormatter: brlCurto,
 };
 
-function BarrasPorPessoa({ titulo, subtitulo, dados }) {
+function BarrasPorPessoa({ titulo, subtitulo, dados, corDe }) {
   const { serie, pessoas } = dados;
   const temDados = pessoas.length > 0 && serie.some((l) => pessoas.some((p) => l[p] > 0));
 
@@ -75,7 +74,7 @@ function BarrasPorPessoa({ titulo, subtitulo, dados }) {
                 key={nome}
                 dataKey={nome}
                 name={nome}
-                fill={CORES_PESSOAS[i % CORES_PESSOAS.length]}
+                fill={corDe(nome, i)}
                 radius={[5, 5, 0, 0]}
                 maxBarSize={22}
               />
@@ -93,6 +92,7 @@ function BarrasPorPessoa({ titulo, subtitulo, dados }) {
 
 export default function InsightsTab({ rows }) {
   const [meses, setMeses] = useState(6);
+  const { corDe } = useCoresIntegrantes();
 
   const entradas = useMemo(() => mensalPorPessoa(rows, 'receita', meses), [rows, meses]);
   const saidas = useMemo(() => mensalPorPessoa(rows, 'despesa', meses), [rows, meses]);
@@ -116,15 +116,17 @@ export default function InsightsTab({ rows }) {
         titulo="Entradas por mês"
         subtitulo="Quanto cada um recebeu em cada mês"
         dados={entradas}
+        corDe={corDe}
       />
 
       <BarrasPorPessoa
         titulo="Saídas por mês"
         subtitulo="Quanto cada um gastou em cada mês"
         dados={saidas}
+        corDe={corDe}
       />
 
-      <Acumulado rows={rows} meses={meses} />
+      <Acumulado rows={rows} meses={meses} corDe={corDe} />
     </div>
   );
 }
@@ -135,7 +137,7 @@ const VISOES = [
   { id: 'despesa', label: 'Saídas por pessoa' },
 ];
 
-function Acumulado({ rows, meses }) {
+function Acumulado({ rows, meses, corDe }) {
   const [visao, setVisao] = useState('geral');
 
   const geral = useMemo(() => acumuladoMensal(rows, meses), [rows, meses]);
@@ -160,7 +162,7 @@ function Acumulado({ rows, meses }) {
             { nome: 'Saiu', valor: ultimo?.saidas || 0, cor: 'var(--danger)' },
           ].map((m) => ({ ...m, pct: tot > 0 ? (m.valor / tot) * 100 : 0 }));
         })()
-      : (porPessoa?.mix || []).map((m, i) => ({ ...m, cor: CORES_PESSOAS[i % CORES_PESSOAS.length] }));
+      : (porPessoa?.mix || []).map((m, i) => ({ ...m, cor: corDe(m.nome, i) }));
 
   return (
     <div className="panel">
@@ -230,7 +232,7 @@ function Acumulado({ rows, meses }) {
                     type="monotone"
                     dataKey={nome}
                     name={nome}
-                    stroke={CORES_PESSOAS[i % CORES_PESSOAS.length]}
+                    stroke={corDe(nome, i)}
                     strokeWidth={2.4}
                     dot={false}
                   />

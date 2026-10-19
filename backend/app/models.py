@@ -2,6 +2,10 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class CorIntegrante(BaseModel):
+    cor: str
+
+
 class CriarOrcamento(BaseModel):
     nome: str
 

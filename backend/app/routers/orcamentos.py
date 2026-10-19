@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..auth import get_current_user
 from ..data import gerar_codigo, buscar_orcamento_por_codigo, membro_doc_id, exigir_membro
 from ..firebase import db
-from ..models import CriarOrcamento, EntrarOrcamento
+import re
+
+from ..models import CriarOrcamento, EntrarOrcamento, CorIntegrante
 
 router = APIRouter(prefix="/orcamentos", tags=["orcamentos"])
 
@@ -118,10 +120,29 @@ async def listar_membros(orcamento_id: str, user: dict = Depends(get_current_use
             "uid": d.to_dict().get("uid"),
             "email": d.to_dict().get("email"),
             "nome": d.to_dict().get("nome") or d.to_dict().get("email"),
+            "cor": d.to_dict().get("cor"),
         }
         for d in docs
     ]
     return {"rows": resultado}
+
+
+@router.put("/{orcamento_id}/membros/{membro_uid}/cor")
+async def definir_cor_membro(
+    orcamento_id: str, membro_uid: str, body: CorIntegrante, user: dict = Depends(get_current_user)
+):
+    """Define a cor de um integrante nos gráficos. Qualquer integrante do
+    orçamento pode escolher a cor de qualquer um — é só preferência visual,
+    compartilhada por todos que veem o orçamento."""
+    await exigir_membro(orcamento_id, user["uid"])
+    cor = body.cor.strip().lower()
+    if not re.fullmatch(r"#[0-9a-f]{6}", cor):
+        raise HTTPException(status_code=400, detail="Cor inválida.")
+    ref = db.collection("membros").document(membro_doc_id(orcamento_id, membro_uid))
+    if not ref.get().exists:
+        raise HTTPException(status_code=404, detail="Integrante não encontrado nesse orçamento.")
+    ref.update({"cor": cor})
+    return {"status": "ok", "cor": cor}
 
 
 @router.delete("/{orcamento_id}")

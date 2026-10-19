@@ -3,6 +3,7 @@ import TagIcon from './TagIcon';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useMembros } from '../hooks/useMembros';
+import { useCoresIntegrantes } from '../hooks/useCoresIntegrantes';
 import { rankBy, filtrarDespesas, filtrarReceitas } from '../utils/insights';
 
 function brl(v) {
@@ -18,6 +19,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   const { getCategoryMeta } = useCategories();
   const { filtroId } = useOrcamentos();
   const { membros } = useMembros(filtroId);
+  const { corDe } = useCoresIntegrantes();
 
   // Chave Mês / Acumulado: decide o recorte de todos os indicadores da aba.
   // Fica lembrada no aparelho entre uma abertura e outra.
@@ -143,10 +145,13 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       {dados.participantes.length > 0 && (
         <section className="secao">
           <h2 className="secao__titulo">{acumulado ? 'Por participante no total' : 'Por participante no mês'}</h2>
-          {dados.participantes.map((p) => (
+          {dados.participantes.map((p, i) => (
             <div key={p.nome} className="participante">
               <div className="participante__topo">
-                <span className="participante__nome">{p.nome}</span>
+                <span className="participante__nome">
+                  <i className="participante__cor" style={{ background: corDe(p.nome, i) }} />
+                  {p.nome}
+                </span>
                 <span className={`participante__saldo ${p.saldo < 0 ? 'text-danger' : 'text-good'}`}>
                   {p.saldo < 0 ? '−' : ''}{brl(Math.abs(p.saldo))}
                 </span>
