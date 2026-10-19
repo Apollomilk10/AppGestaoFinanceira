@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Pencil, Trash2, Repeat } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
@@ -18,6 +18,39 @@ export default function ManageTab({ rows, onChanged, onDeleted }) {
   const [error, setError] = useState('');
 
   const ordenadas = [...rows].sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
+
+  // Marcações de mês e de dia na lista, com o total de cada mês.
+  const chaveMes = (d) => (d ? `${d.getFullYear()}-${d.getMonth()}` : 'sem-data');
+  const chaveDia = (d) => (d ? d.toDateString() : 'sem-data');
+  const totaisMes = new Map();
+  ordenadas.forEach((r) => {
+    if (r.status === 'projetado') return;
+    const k = chaveMes(r.data);
+    const t = totaisMes.get(k) || { entradas: 0, saidas: 0 };
+    if (r.tipo === 'receita') t.entradas += r.valor;
+    else t.saidas += r.valor;
+    totaisMes.set(k, t);
+  });
+  const anoAtual = new Date().getFullYear();
+  function rotuloMes(d) {
+    if (!d) return 'Sem data';
+    const nome = d.toLocaleDateString('pt-BR', { month: 'long' });
+    return `${nome.charAt(0).toUpperCase()}${nome.slice(1)} de ${d.getFullYear()}`;
+  }
+  function rotuloDia(d) {
+    if (!d) return '';
+    const hoje = new Date();
+    const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 1);
+    if (d.toDateString() === hoje.toDateString()) return 'Hoje';
+    if (d.toDateString() === ontem.toDateString()) return 'Ontem';
+    const txt = d.toLocaleDateString('pt-BR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      ...(d.getFullYear() !== anoAtual ? { year: 'numeric' } : {}),
+    });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  }
 
   async function handleDelete(row, escopo = 'este') {
     setDeleting(true);
@@ -62,18 +95,33 @@ export default function ManageTab({ rows, onChanged, onDeleted }) {
           </p>
         )}
 
-        {ordenadas.map((row) => {
+        {ordenadas.map((row, i) => {
+          const anterior = ordenadas[i - 1];
+          const novoMes = !anterior || chaveMes(anterior.data) !== chaveMes(row.data);
+          const novoDia = novoMes || chaveDia(anterior.data) !== chaveDia(row.data);
+          const totalMes = totaisMes.get(chaveMes(row.data)) || { entradas: 0, saidas: 0 };
           const catMeta = getCategoryMeta(row.categoria);
           const subMeta = getSubcategoryMeta(row.categoria, row.etapa);
           const isConfirming = confirmingId === row.id;
 
           return (
-            <div key={row.id} className="manage-row">
+            <Fragment key={row.id}>
+              {novoMes && (
+                <div className="lista-mes">
+                  <span className="lista-mes__nome">{rotuloMes(row.data)}</span>
+                  <span className="lista-mes__totais">
+                    <span className="text-good">+{formatBRL(totalMes.entradas)}</span>
+                    <span className="text-danger">−{formatBRL(totalMes.saidas)}</span>
+                  </span>
+                </div>
+              )}
+              {novoDia && row.data && <div className="lista-dia">{rotuloDia(row.data)}</div>}
+            <div className="manage-row">
               <TagIcon meta={catMeta} />
               <div className="manage-row__main">
                 <span className="manage-row__desc">{row.descricao || catMeta.label}</span>
                 <span className="manage-row__meta text-muted">
-                  {row.data ? row.data.toLocaleDateString('pt-BR') : 'sem data'} · {catMeta.label} · {subMeta.label}
+                  {catMeta.label} · {subMeta.label}
                   {row.responsavelNome ? ` · ${row.responsavelNome}` : ''}
                 </span>
               </div>
@@ -147,6 +195,7 @@ export default function ManageTab({ rows, onChanged, onDeleted }) {
                 </div>
               )}
             </div>
+            </Fragment>
           );
         })}
       </div>

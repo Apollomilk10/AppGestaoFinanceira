@@ -807,3 +807,49 @@
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--panel-border);
 }
+
+/* --- Orçamentos: marcações de mês e de dia na lista ---------------- */
+.lista-mes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 14px -4px 2px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mint-strong) 14%, var(--panel));
+}
+
+.lista-mes:first-of-type {
+  margin-top: 4px;
+}
+
+.lista-mes__nome {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--brand);
+}
+
+[data-theme='dark'] .lista-mes__nome {
+  color: var(--mint-strong);
+}
+
+.lista-mes__totais {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.lista-dia {
+  margin: 10px 2px 0;
+  padding-bottom: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--panel-border);
+}
