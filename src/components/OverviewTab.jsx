@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import TagIcon from './TagIcon';
 import { useCategories } from '../context/CategoriesContext';
+import { useOrcamentos } from '../context/OrcamentosContext';
+import { useMembros } from '../hooks/useMembros';
 import { rankBy, filtrarDespesas, filtrarReceitas } from '../utils/insights';
 
 function brl(v) {
@@ -14,6 +16,8 @@ function brl(v) {
  */
 export default function OverviewTab({ rows, onSelectCategory }) {
   const { getCategoryMeta } = useCategories();
+  const { filtroId } = useOrcamentos();
+  const { membros } = useMembros(filtroId);
 
   const dados = useMemo(() => {
     const agora = new Date();
@@ -28,7 +32,24 @@ export default function OverviewTab({ rows, onSelectCategory }) {
     const receitas = filtrarReceitas(doMes);
     const totalDespesas = despesas.reduce((s, r) => s + r.valor, 0);
     const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
+    // Quebra por participante: entradas e saídas do mês de cada um.
+    // Começa com todos os integrantes do orçamento (mesmo quem não lançou
+    // nada) e soma quem aparece nos lançamentos.
+    const porPessoa = new Map();
+    membros.forEach((m) => porPessoa.set(m.nome, { nome: m.nome, entradas: 0, saidas: 0 }));
+    doMes.forEach((r) => {
+      const nome = r.responsavelNome || 'Sem responsável';
+      const p = porPessoa.get(nome) || { nome, entradas: 0, saidas: 0 };
+      if (r.tipo === 'receita') p.entradas += r.valor;
+      else p.saidas += r.valor;
+      porPessoa.set(nome, p);
+    });
+    const participantes = Array.from(porPessoa.values())
+      .map((p) => ({ ...p, saldo: p.entradas - p.saidas }))
+      .sort((a, b) => b.entradas + b.saidas - (a.entradas + a.saidas));
+
     return {
+      participantes,
       mes: agora.toLocaleDateString('pt-BR', { month: 'long' }),
       totalDespesas,
       totalReceitas,
@@ -39,7 +60,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
         .sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0))
         .slice(0, 5),
     };
-  }, [rows]);
+  }, [rows, membros]);
 
   // Quanto do que entrou no mês já foi gasto.
   const consumido =
@@ -77,6 +98,26 @@ export default function OverviewTab({ rows, onSelectCategory }) {
           </span>
         </div>
       </section>
+
+      {dados.participantes.length > 0 && (
+        <section className="secao">
+          <h2 className="secao__titulo">Por participante no mês</h2>
+          {dados.participantes.map((p) => (
+            <div key={p.nome} className="participante">
+              <div className="participante__topo">
+                <span className="participante__nome">{p.nome}</span>
+                <span className={`participante__saldo ${p.saldo < 0 ? 'text-danger' : 'text-good'}`}>
+                  {p.saldo < 0 ? '−' : ''}{brl(Math.abs(p.saldo))}
+                </span>
+              </div>
+              <div className="participante__fluxo">
+                <span>Entrou <b className="text-good">{brl(p.entradas)}</b></span>
+                <span>Saiu <b className="text-danger">{brl(p.saidas)}</b></span>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {dados.recentes.length === 0 && (
         <section className="secao">
