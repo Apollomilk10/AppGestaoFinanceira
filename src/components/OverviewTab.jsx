@@ -21,6 +21,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
 
   const dados = useMemo(() => {
     const agora = new Date();
+    const fimDeHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
     const doMes = rows.filter(
       (r) =>
         r.status !== 'projetado' &&
@@ -53,7 +54,12 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       mes: agora.toLocaleDateString('pt-BR', { month: 'long' }),
       totalDespesas,
       totalReceitas,
-      saldo: totalReceitas - totalDespesas,
+      // Saldo atual: tudo que entrou menos tudo que saiu, desde o primeiro
+      // lançamento até hoje (inclusive). Lançamentos com data futura e
+      // desejos/projetados ficam de fora.
+      saldo: rows
+        .filter((r) => r.status !== 'projetado' && r.data && r.data < fimDeHoje)
+        .reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0),
       porCategoria: rankBy(despesas, 'categoria').slice(0, 5),
       recentes: rows
         .filter((r) => r.status !== 'projetado')
@@ -74,7 +80,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   return (
     <div className="tab-content tab-content--fluido">
       <section className="balanco">
-        <span className="balanco__label">Sobra de {dados.mes}</span>
+        <span className="balanco__label">Saldo atual</span>
         <strong className={`balanco__valor ${negativo ? 'balanco__valor--negativo' : ''}`}>
           {negativo ? '−' : ''}{brl(Math.abs(dados.saldo))}
         </strong>
@@ -90,11 +96,11 @@ export default function OverviewTab({ rows, onSelectCategory }) {
         <div className="balanco__pes">
           <span className="balanco__pe">
             <i className="balanco__ponto balanco__ponto--entrou" />
-            Entrou <b>{brl(dados.totalReceitas)}</b>
+            Entrou em {dados.mes} <b>{brl(dados.totalReceitas)}</b>
           </span>
           <span className="balanco__pe">
             <i className="balanco__ponto balanco__ponto--saiu" />
-            Saiu <b>{brl(dados.totalDespesas)}</b>
+            Saiu em {dados.mes} <b>{brl(dados.totalDespesas)}</b>
           </span>
         </div>
       </section>
