@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { Pencil, Trash2, Repeat } from 'lucide-react';
+import { Pencil, Trash2, Repeat, X } from 'lucide-react';
 import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
 import LimitesPanel from './LimitesPanel';
@@ -8,7 +8,7 @@ import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
-export default function ManageTab({ rows, onChanged, onDeleted }) {
+export default function ManageTab({ rows, onChanged, onDeleted, categoriaFiltro = 'all', onLimparFiltro }) {
   const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const { filtroId } = useOrcamentos();
   const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
@@ -17,7 +17,11 @@ export default function ManageTab({ rows, onChanged, onDeleted }) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
 
-  const ordenadas = [...rows].sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
+  // Vindo de "Onde o dinheiro foi" no Início, a lista chega já filtrada
+  // pela categoria tocada; o chip permite voltar a ver tudo.
+  const filtrando = categoriaFiltro && categoriaFiltro !== 'all';
+  const visiveis = filtrando ? rows.filter((r) => getCategoryMeta(r.categoria).key === categoriaFiltro) : rows;
+  const ordenadas = [...visiveis].sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
 
   // Marcações de mês e de dia na lista, com o total de cada mês.
   const chaveMes = (d) => (d ? `${d.getFullYear()}-${d.getMonth()}` : 'sem-data');
@@ -87,7 +91,15 @@ export default function ManageTab({ rows, onChanged, onDeleted }) {
       )}
 
       <div className="panel">
-        <h2 className="panel__title">Todos os lançamentos ({rows.length})</h2>
+        <h2 className="panel__title">
+          {filtrando ? `${getCategoryMeta(categoriaFiltro).label} (${visiveis.length})` : `Todos os lançamentos (${rows.length})`}
+        </h2>
+        {filtrando && (
+          <button type="button" className="filtro-chip" onClick={onLimparFiltro}>
+            Mostrando só {getCategoryMeta(categoriaFiltro).label}
+            <X size={14} />
+          </button>
+        )}
 
         {ordenadas.length === 0 && (
           <p className="text-muted" style={{ padding: '20px 0', textAlign: 'center' }}>

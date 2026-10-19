@@ -73,3 +73,15 @@ class ContaInput(BaseModel):
 class LimiteInput(BaseModel):
     categoriaChave: str
     valorLimite: float
+
+
+class FinanciamentoInput(BaseModel):
+    nome: str
+    valorFinanciado: float
+    taxaAnual: float = 0  # efetiva, em % ao ano
+    prazoMeses: int
+    sistema: str = "price"  # price | sac
+    parcelasPagas: int = 0
+    diaVencimento: int = 5
+    seguroMensal: float = 0  # seguros e tarifas somados a cada parcela
+    valorParcela: Optional[float] = None  # se já souber a parcela, vale esta (constante)

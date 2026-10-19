@@ -23,6 +23,11 @@ def _serializar(doc) -> dict:
         "ativo": data.get("ativo", True),
         "parcelas": data.get("parcelas"),
         "vezesGeradas": data.get("vezesGeradas", 0),
+        "ultimoMesGerado": data.get("ultimoMesGerado", ""),
+        "valores": data.get("valores"),
+        "parcelaInicial": data.get("parcelaInicial", 1),
+        "parcelasTotal": data.get("parcelasTotal"),
+        "financiamentoId": data.get("financiamentoId"),
     }
 
 
@@ -99,7 +104,14 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
             continue
 
         numero_parcela = vezes_geradas + 1
-        sufixo = f" (parcela {numero_parcela}/{parcelas})" if parcelas else " (recorrente)"
+        # Financiamento já em andamento: a etiqueta mostra a parcela real
+        # do contrato (ex.: 41/360), não a contagem a partir do cadastro.
+        numero_rotulo = numero_parcela + data.get("parcelaInicial", 1) - 1
+        total_rotulo = data.get("parcelasTotal") or parcelas
+        sufixo = f" (parcela {numero_rotulo}/{total_rotulo})" if parcelas else " (recorrente)"
+        # Parcelas de valor variável (SAC): uma por mês, em ordem.
+        valores = data.get("valores")
+        valor_parcela = valores[vezes_geradas] if valores and vezes_geradas < len(valores) else data.get("valor", 0)
 
         data_lancamento = agora.replace(day=min(data.get("diaDoMes", 1), 28))
         db.collection("gastos").add({
@@ -107,7 +119,7 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
             "data": data_lancamento.strftime("%d/%m/%Y"),
             "categoria": data.get("categoria", "outro"),
             "descricao": data.get("descricao", "") + sufixo,
-            "valor": data.get("valor", 0),
+            "valor": valor_parcela,
             "responsavel": data.get("criadoPorEmail", ""),
             "etapa": data.get("etapa", "nao_especificada"),
             "tipo": data.get("tipo", "despesa"),

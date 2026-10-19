@@ -283,8 +283,11 @@ export function projecaoMensalFutura(recorrentes, offsetAlvo, mesAtualStr) {
     }
 
     if (incluir) {
-      if (r.tipo === 'receita') receitas += r.valor;
-      else despesas += r.valor;
+      // Parcelas de valor variável (financiamento SAC): pega a do mês certo.
+      const idx = (r.vezesGeradas || 0) + (offsetAlvo - proximoOffset);
+      const valor = Array.isArray(r.valores) && r.valores[idx] != null ? r.valores[idx] : r.valor;
+      if (r.tipo === 'receita') receitas += valor;
+      else despesas += valor;
     }
   });
 

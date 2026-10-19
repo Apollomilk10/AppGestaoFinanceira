@@ -1029,3 +1029,127 @@
   margin-right: 8px;
   vertical-align: 1px;
 }
+
+/* --- Gastos filtrados por categoria -------------------------------- */
+.filtro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 10px;
+  padding: 6px 10px 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+/* --- Financiamentos ------------------------------------------------- */
+.fin-card__topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fin-card__icone {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--mint-soft);
+  color: var(--mint-strong);
+}
+
+.fin-card__titulo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.fin-card__titulo strong {
+  overflow-wrap: anywhere;
+}
+
+.fin-card__titulo span {
+  font-size: 12px;
+}
+
+.fin-card__progresso {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.fin-card__progresso > div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mint-strong), var(--mint));
+}
+
+.fin-card__legenda {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.fin-card__grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin-top: 14px;
+}
+
+.fin-card__grade span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.fin-card__grade b {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.fin-previa {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+
+.fin-previa > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fin-previa span {
+  font-size: 12px;
+}
+
+.fin-previa b {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.fin-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fin-duo > .field {
+  min-width: 0;
+}

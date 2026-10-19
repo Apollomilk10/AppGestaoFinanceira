@@ -13,9 +13,9 @@ import AppSkeleton from './components/AppSkeleton';
 const ProfileTab = lazy(() => import('./components/ProfileTab'));
 import TabBar from './components/TabBar';
 import OverviewTab from './components/OverviewTab';
-import TransactionsTab from './components/TransactionsTab';
 const InsightsTab = lazy(() => import('./components/InsightsTab'));
 const ManageTab = lazy(() => import('./components/ManageTab'));
+const FinanciamentosTab = lazy(() => import('./components/FinanciamentosTab'));
 import NewExpenseForm from './components/NewExpenseForm';
 import RefreshButton from './components/RefreshButton';
 import './styles.css';
@@ -206,16 +206,29 @@ export default function App() {
             <OverviewTab rows={rowsMemo} onSelectCategory={handleSelectCategory} onNavigate={setActiveTab} onChanged={load} />
           )}
           {activeTab === 'transactions' && (
-            <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
+            <ManageTab
+              rows={rowsMemo}
+              onChanged={load}
+              onDeleted={removerRows}
+              categoriaFiltro={jumpCategoria}
+              onLimparFiltro={() => setJumpCategoria('all')}
+            />
           )}
           {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
-          {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} onDeleted={removerRows} />}
+          {activeTab === 'financiamentos' && <FinanciamentosTab onChanged={load} />}
 
           <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
         </Suspense>
       )}
 
-      {!showProfile && <TabBar active={activeTab} onChange={setActiveTab} />}
+      {!showProfile && <TabBar
+          active={activeTab}
+          onChange={(id) => {
+            // Tocar na aba Gastos pela barra sempre mostra tudo.
+            if (id === 'transactions') setJumpCategoria('all');
+            setActiveTab(id);
+          }}
+        />}
     </div>
   );
 }
