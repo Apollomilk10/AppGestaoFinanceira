@@ -2,14 +2,14 @@ import { Home, Receipt, PieChart, BarChart3 } from 'lucide-react';
 
 /**
  * Navegação do Casa+, em quatro destinos: onde eu estou (Início),
- * o que saiu (Gastos), os lançamentos (Orçamentos) e o que os números
- * dizem (Relatórios).
+ * o que os números dizem (Relatórios), o que saiu (Gastos) e os
+ * lançamentos (Orçamentos).
  */
 const TABS = [
   { id: 'overview', label: 'Início', icon: Home },
+  { id: 'insights', label: 'Relatórios', icon: BarChart3 },
   { id: 'transactions', label: 'Gastos', icon: Receipt },
   { id: 'manage', label: 'Orçamentos', icon: PieChart },
-  { id: 'insights', label: 'Relatórios', icon: BarChart3 },
 ];
 
 export default function TabBar({ active, onChange }) {
