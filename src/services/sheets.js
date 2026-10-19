@@ -40,6 +40,7 @@ export async function fetchGastosDeOrcamento(orcamento) {
       tipo: row.tipo === 'receita' ? 'receita' : 'despesa',
       status: row.status === 'projetado' ? 'projetado' : 'confirmado',
       contaId: row.contaId || null,
+      recorrenteId: row.recorrenteId || null,
       criadoPorNome: (row.criadoPorNome || row.criadoPorEmail || '').toString().trim(),
     }))
     .filter((row) => row.valor > 0 || row.descricao);

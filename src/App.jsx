@@ -87,6 +87,12 @@ export default function App() {
     // categoria). O próximo refresh automático (60s) sincroniza sozinho.
   }
 
+  /** Tira da tela, na hora, os lançamentos que acabaram de ser excluídos. */
+  function removerRows(ids) {
+    const apagar = new Set(ids);
+    setRows((prev) => prev.filter((r) => !apagar.has(r.id)));
+  }
+
   useEffect(() => {
     if (!isAuthenticated || orcamentos.length === 0) return;
     setStatus('loading');
@@ -203,7 +209,7 @@ export default function App() {
             <TransactionsTab rows={rowsMemo} initialCategoria={jumpCategoria} />
           )}
           {activeTab === 'insights' && <InsightsTab rows={rowsMemo} />}
-          {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} />}
+          {activeTab === 'manage' && <ManageTab rows={rowsMemo} onChanged={load} onDeleted={removerRows} />}
 
           <NewExpenseForm onSaved={load} onSavedRow={addRowOptimista} />
         </Suspense>

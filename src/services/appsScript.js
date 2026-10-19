@@ -8,8 +8,12 @@ export function updateGasto(gastoId, gasto, session) {
   return apiPut(`/orcamentos/${session.orcamentoId}/gastos/${gastoId}`, gasto);
 }
 
-export function deleteGasto(gastoId, session) {
-  return apiDelete(`/orcamentos/${session.orcamentoId}/gastos/${gastoId}`);
+/**
+ * escopo 'este' apaga só o lançamento; 'futuros' (lançamentos de conta
+ * recorrente/parcelada) apaga este e os seguintes e encerra a recorrência.
+ */
+export function deleteGasto(gastoId, session, escopo = 'este') {
+  return apiDelete(`/orcamentos/${session.orcamentoId}/gastos/${gastoId}?escopo=${escopo}`);
 }
 
 export function sendFeedback(mensagem) {

@@ -756,3 +756,54 @@
 .participante__fluxo b {
   font-weight: 600;
 }
+
+/* --- Orçamentos: confirmação de exclusão ocupa a linha inteira ----- */
+.manage-row {
+  flex-wrap: wrap;
+}
+
+.confirmar-exclusao {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
+}
+
+.confirmar-exclusao__pergunta {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.confirmar-exclusao__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confirmar-exclusao__botoes button {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmar-exclusao__botoes button:disabled {
+  opacity: 0.6;
+}
+
+.confirmar-exclusao__perigo {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.confirmar-exclusao__neutro {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}

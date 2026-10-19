@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import get_current_user
 from ..data import exigir_membro
@@ -65,6 +65,8 @@ def _serializar(doc, uid_para_nome: dict, email_para_uid: dict) -> dict:
         "tipo": data.get("tipo", "despesa"),
         "status": data.get("status", "confirmado"),
         "contaId": data.get("contaId"),
+        # id da conta recorrente que gerou este lançamento (se houver)
+        "recorrenteId": data.get("geradoDeRecorrente"),
         "criadoPorEmail": data.get("criadoPorEmail", ""),
         "criadoPorNome": data.get("criadoPorNome", data.get("criadoPorEmail", "")),
     }
@@ -142,8 +144,28 @@ async def atualizar_gasto(orcamento_id: str, gasto_id: str, body: GastoInput, us
     return {"status": "ok"}
 
 
+def _data_br(valor: str):
+    """Converte 'dd/mm/aaaa' em datetime (ou None se não der)."""
+    try:
+        return datetime.strptime((valor or "").strip(), "%d/%m/%Y")
+    except ValueError:
+        return None
+
+
 @router.delete("/orcamentos/{orcamento_id}/gastos/{gasto_id}")
-async def excluir_gasto(orcamento_id: str, gasto_id: str, user: dict = Depends(get_current_user)):
+async def excluir_gasto(
+    orcamento_id: str,
+    gasto_id: str,
+    escopo: str = Query("este", pattern="^(este|futuros)$"),
+    user: dict = Depends(get_current_user),
+):
+    """Exclui um lançamento.
+
+    escopo=este     -> só este lançamento.
+    escopo=futuros  -> se o lançamento veio de uma conta recorrente/parcelada,
+                       exclui este e todos os lançamentos dela com data igual
+                       ou posterior, e encerra a recorrência (não gera mais).
+    """
     await exigir_membro(orcamento_id, user["uid"])
 
     ref = db.collection("gastos").document(gasto_id)
@@ -151,8 +173,35 @@ async def excluir_gasto(orcamento_id: str, gasto_id: str, user: dict = Depends(g
     if not doc.exists or doc.to_dict().get("orcamentoId") != orcamento_id:
         raise HTTPException(status_code=404, detail="Lançamento não encontrado nesse orçamento.")
 
-    ref.delete()
-    return {"status": "ok"}
+    data = doc.to_dict()
+    recorrente_id = data.get("geradoDeRecorrente")
+
+    if escopo == "este" or not recorrente_id:
+        ref.delete()
+        return {"status": "ok", "excluidos": [gasto_id]}
+
+    data_corte = _data_br(data.get("data", ""))
+    excluidos = []
+    irmaos = db.collection("gastos").where("geradoDeRecorrente", "==", recorrente_id).stream()
+    for d in irmaos:
+        dd = d.to_dict()
+        if dd.get("orcamentoId") != orcamento_id:
+            continue
+        data_irmao = _data_br(dd.get("data", ""))
+        if d.id == gasto_id or data_corte is None or (data_irmao is not None and data_irmao >= data_corte):
+            d.reference.delete()
+            excluidos.append(d.id)
+    if gasto_id not in excluidos:
+        ref.delete()
+        excluidos.append(gasto_id)
+
+    # encerra a recorrência: nenhum mês novo será gerado a partir daqui
+    rec_ref = db.collection("recorrentes").document(recorrente_id)
+    rec = rec_ref.get()
+    if rec.exists and rec.to_dict().get("orcamentoId") == orcamento_id:
+        rec_ref.update({"ativo": False, "encerradoEm": datetime.now(timezone.utc)})
+
+    return {"status": "ok", "excluidos": excluidos}
 
 
 @router.get("/orcamentos/{orcamento_id}/por-integrante")

@@ -8,7 +8,7 @@ import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
 
-export default function ManageTab({ rows, onChanged }) {
+export default function ManageTab({ rows, onChanged, onDeleted }) {
   const { getCategoryMeta, getSubcategoryMeta } = useCategories();
   const { filtroId } = useOrcamentos();
   const [vendoRecorrentes, setVendoRecorrentes] = useState(false);
@@ -19,16 +19,18 @@ export default function ManageTab({ rows, onChanged }) {
 
   const ordenadas = [...rows].sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
 
-  async function handleDelete(row) {
+  async function handleDelete(row, escopo = 'este') {
     setDeleting(true);
     setError('');
     try {
-      await deleteGasto(row.rowNumber, { orcamentoId: row.orcamentoId });
+      const resultado = await deleteGasto(row.rowNumber, { orcamentoId: row.orcamentoId }, escopo);
       setConfirmingId(null);
-      onChanged?.();
+      // Remove da tela na hora: recarregar do servidor logo após a exclusão
+      // podia trazer o lançamento de volta por um instante.
+      onDeleted?.(resultado?.excluidos?.length ? resultado.excluidos : [row.id]);
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || 'Não foi possível excluir.');
     } finally {
       setDeleting(false);
     }
@@ -53,8 +55,6 @@ export default function ManageTab({ rows, onChanged }) {
 
       <div className="panel">
         <h2 className="panel__title">Todos os lançamentos ({rows.length})</h2>
-
-        {error && <p className="field-error" style={{ marginBottom: 10 }}>{error}</p>}
 
         {ordenadas.length === 0 && (
           <p className="text-muted" style={{ padding: '20px 0', textAlign: 'center' }}>
@@ -82,18 +82,55 @@ export default function ManageTab({ rows, onChanged }) {
               </span>
 
               {isConfirming ? (
-                <div className="confirm-delete">
-                  <button
-                    type="button"
-                    className="confirm-delete__yes"
-                    disabled={deleting}
-                    onClick={() => handleDelete(row)}
-                  >
-                    {deleting ? '...' : 'excluir'}
-                  </button>
-                  <button type="button" className="confirm-delete__no" onClick={() => setConfirmingId(null)}>
-                    cancelar
-                  </button>
+                <div className="confirmar-exclusao">
+                  <span className="confirmar-exclusao__pergunta">
+                    {row.recorrenteId
+                      ? 'Este lançamento se repete. O que excluir?'
+                      : 'Excluir este lançamento?'}
+                  </span>
+                  <div className="confirmar-exclusao__botoes">
+                    {row.recorrenteId ? (
+                      <>
+                        <button
+                          type="button"
+                          className="confirmar-exclusao__perigo"
+                          disabled={deleting}
+                          onClick={() => handleDelete(row, 'futuros')}
+                        >
+                          {deleting ? 'excluindo…' : 'Este e os próximos'}
+                        </button>
+                        <button
+                          type="button"
+                          className="confirmar-exclusao__neutro"
+                          disabled={deleting}
+                          onClick={() => handleDelete(row, 'este')}
+                        >
+                          Só este
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="confirmar-exclusao__perigo"
+                        disabled={deleting}
+                        onClick={() => handleDelete(row, 'este')}
+                      >
+                        {deleting ? 'excluindo…' : 'Excluir'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="confirmar-exclusao__neutro"
+                      disabled={deleting}
+                      onClick={() => {
+                        setConfirmingId(null);
+                        setError('');
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  {error && <p className="field-error">{error}</p>}
                 </div>
               ) : (
                 <div className="manage-row__actions">
