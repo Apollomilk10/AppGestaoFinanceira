@@ -912,3 +912,32 @@
   min-width: 92px;
   text-align: right;
 }
+
+/* --- Início: chave Mês / Acumulado --------------------------------- */
+.periodo-chave {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.periodo-chave button {
+  border: none;
+  background: none;
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.periodo-chave__ativo {
+  background: var(--brand) !important;
+  color: var(--on-brand) !important;
+}

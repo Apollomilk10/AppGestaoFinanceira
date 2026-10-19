@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import TagIcon from './TagIcon';
 import { useCategories } from '../context/CategoriesContext';
 import { useOrcamentos } from '../context/OrcamentosContext';
@@ -19,26 +19,47 @@ export default function OverviewTab({ rows, onSelectCategory }) {
   const { filtroId } = useOrcamentos();
   const { membros } = useMembros(filtroId);
 
+  // Chave Mês / Acumulado: decide o recorte de todos os indicadores da aba.
+  // Fica lembrada no aparelho entre uma abertura e outra.
+  const [periodo, setPeriodo] = useState(() => {
+    try {
+      return localStorage.getItem('casa:inicio-periodo') === 'acumulado' ? 'acumulado' : 'mes';
+    } catch {
+      return 'mes';
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('casa:inicio-periodo', periodo);
+    } catch {
+      /* sem armazenamento: só não lembra a escolha */
+    }
+  }, [periodo]);
+  const acumulado = periodo === 'acumulado';
+
   const dados = useMemo(() => {
     const agora = new Date();
     const fimDeHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
-    const doMes = rows.filter(
+    // Mês: só o mês atual. Acumulado: tudo desde o primeiro lançamento até
+    // hoje (inclusive). Datas futuras e desejos/projetados ficam de fora.
+    const base = rows.filter(
       (r) =>
         r.status !== 'projetado' &&
         r.data &&
-        r.data.getFullYear() === agora.getFullYear() &&
-        r.data.getMonth() === agora.getMonth()
+        (acumulado
+          ? r.data < fimDeHoje
+          : r.data.getFullYear() === agora.getFullYear() && r.data.getMonth() === agora.getMonth())
     );
-    const despesas = filtrarDespesas(doMes);
-    const receitas = filtrarReceitas(doMes);
+    const despesas = filtrarDespesas(base);
+    const receitas = filtrarReceitas(base);
     const totalDespesas = despesas.reduce((s, r) => s + r.valor, 0);
     const totalReceitas = receitas.reduce((s, r) => s + r.valor, 0);
-    // Quebra por participante: entradas e saídas do mês de cada um.
+    // Quebra por participante: entradas e saídas de cada um no período.
     // Começa com todos os integrantes do orçamento (mesmo quem não lançou
     // nada) e soma quem aparece nos lançamentos.
     const porPessoa = new Map();
     membros.forEach((m) => porPessoa.set(m.nome, { nome: m.nome, entradas: 0, saidas: 0 }));
-    doMes.forEach((r) => {
+    base.forEach((r) => {
       const nome = r.responsavelNome || 'Sem responsável';
       const p = porPessoa.get(nome) || { nome, entradas: 0, saidas: 0 };
       if (r.tipo === 'receita') p.entradas += r.valor;
@@ -54,21 +75,16 @@ export default function OverviewTab({ rows, onSelectCategory }) {
       mes: agora.toLocaleDateString('pt-BR', { month: 'long' }),
       totalDespesas,
       totalReceitas,
-      // Saldo atual: tudo que entrou menos tudo que saiu, desde o primeiro
-      // lançamento até hoje (inclusive). Lançamentos com data futura e
-      // desejos/projetados ficam de fora.
-      saldo: rows
-        .filter((r) => r.status !== 'projetado' && r.data && r.data < fimDeHoje)
-        .reduce((s, r) => s + (r.tipo === 'receita' ? r.valor : -r.valor), 0),
+      saldo: totalReceitas - totalDespesas,
       porCategoria: rankBy(despesas, 'categoria').slice(0, 5),
       recentes: rows
         .filter((r) => r.status !== 'projetado')
         .sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0))
         .slice(0, 5),
     };
-  }, [rows, membros]);
+  }, [rows, membros, acumulado]);
 
-  // Quanto do que entrou no mês já foi gasto.
+  // Quanto do que entrou (no período) já foi gasto.
   const consumido =
     dados.totalReceitas > 0
       ? Math.min(100, (dados.totalDespesas / dados.totalReceitas) * 100)
@@ -79,8 +95,27 @@ export default function OverviewTab({ rows, onSelectCategory }) {
 
   return (
     <div className="tab-content tab-content--fluido">
+      <div className="periodo-chave" role="group" aria-label="Período dos indicadores">
+        <button
+          type="button"
+          className={!acumulado ? 'periodo-chave__ativo' : ''}
+          aria-pressed={!acumulado}
+          onClick={() => setPeriodo('mes')}
+        >
+          Mês
+        </button>
+        <button
+          type="button"
+          className={acumulado ? 'periodo-chave__ativo' : ''}
+          aria-pressed={acumulado}
+          onClick={() => setPeriodo('acumulado')}
+        >
+          Acumulado
+        </button>
+      </div>
+
       <section className="balanco">
-        <span className="balanco__label">Saldo atual</span>
+        <span className="balanco__label">{acumulado ? 'Saldo atual' : `Saldo de ${dados.mes}`}</span>
         <strong className={`balanco__valor ${negativo ? 'balanco__valor--negativo' : ''}`}>
           {negativo ? '−' : ''}{brl(Math.abs(dados.saldo))}
         </strong>
@@ -96,18 +131,18 @@ export default function OverviewTab({ rows, onSelectCategory }) {
         <div className="balanco__pes">
           <span className="balanco__pe">
             <i className="balanco__ponto balanco__ponto--entrou" />
-            Entrou em {dados.mes} <b>{brl(dados.totalReceitas)}</b>
+            {acumulado ? 'Entrou no total' : `Entrou em ${dados.mes}`} <b>{brl(dados.totalReceitas)}</b>
           </span>
           <span className="balanco__pe">
             <i className="balanco__ponto balanco__ponto--saiu" />
-            Saiu em {dados.mes} <b>{brl(dados.totalDespesas)}</b>
+            {acumulado ? 'Saiu no total' : `Saiu em ${dados.mes}`} <b>{brl(dados.totalDespesas)}</b>
           </span>
         </div>
       </section>
 
       {dados.participantes.length > 0 && (
         <section className="secao">
-          <h2 className="secao__titulo">Por participante no mês</h2>
+          <h2 className="secao__titulo">{acumulado ? 'Por participante no total' : 'Por participante no mês'}</h2>
           {dados.participantes.map((p) => (
             <div key={p.nome} className="participante">
               <div className="participante__topo">
@@ -135,7 +170,7 @@ export default function OverviewTab({ rows, onSelectCategory }) {
 
       {dados.porCategoria.length > 0 && (
         <section className="secao">
-          <h2 className="secao__titulo">Onde o dinheiro foi</h2>
+          <h2 className="secao__titulo">{acumulado ? 'Onde o dinheiro foi (total)' : 'Onde o dinheiro foi no mês'}</h2>
           {dados.porCategoria.map((item) => {
             const meta = getCategoryMeta(item.key);
             return (
