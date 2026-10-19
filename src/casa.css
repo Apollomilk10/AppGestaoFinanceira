@@ -918,6 +918,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
+  max-width: 320px;
+  margin: 4px auto 14px;
   padding: 4px;
   border-radius: 999px;
   background: var(--panel);
@@ -928,10 +930,10 @@
   border: none;
   background: none;
   border-radius: 999px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
