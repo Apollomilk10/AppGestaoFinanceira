@@ -853,3 +853,62 @@
   color: var(--muted);
   border-bottom: 1px solid var(--panel-border);
 }
+
+/* --- Relatórios: mix do acumulado ---------------------------------- */
+.mix {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.mix__titulo {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.mix__barra {
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--panel-border);
+  margin-bottom: 10px;
+}
+
+.mix__barra > div + div {
+  border-left: 2px solid var(--panel);
+}
+
+.mix__linha {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.mix__ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mix__nome {
+  overflow-wrap: anywhere;
+}
+
+.mix__pct {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mix__valor {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 92px;
+  text-align: right;
+}

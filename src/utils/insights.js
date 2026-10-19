@@ -418,3 +418,47 @@ export function acumuladoMensal(rows, meses = 12) {
     return { label: b.label, entradas, saidas, saldo: entradas - saidas };
   });
 }
+
+/**
+ * Acumulado por pessoa: quanto cada integrante já recebeu (tipo 'receita')
+ * ou já gastou (tipo 'despesa'), somando tudo desde o primeiro lançamento
+ * até o fim de cada um dos últimos N meses. Devolve também o "mix" final —
+ * quanto do total acumulado é de cada pessoa.
+ */
+export function acumuladoPorPessoa(rows, tipo, meses = 12) {
+  const base = rows.filter(
+    (r) =>
+      r.status !== 'projetado' &&
+      r.data &&
+      (tipo === 'receita' ? r.tipo === 'receita' : r.tipo !== 'receita')
+  );
+  const nomeDe = (r) => r.responsavelNome || SEM_RESPONSAVEL;
+
+  const totais = new Map();
+  base.forEach((r) => totais.set(nomeDe(r), (totais.get(nomeDe(r)) || 0) + r.valor));
+  const pessoas = Array.from(totais.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome]) => nome);
+
+  const buckets = ultimosMeses(meses);
+  const fimJanela = buckets[buckets.length - 1].fim;
+  const serie = buckets.map((b) => {
+    const linha = { label: b.label };
+    pessoas.forEach((nome) => {
+      linha[nome] = base
+        .filter((r) => nomeDe(r) === nome && r.data < b.fim)
+        .reduce((s, r) => s + r.valor, 0);
+    });
+    return linha;
+  });
+
+  const ultimo = serie[serie.length - 1] || {};
+  const total = pessoas.reduce((s, n) => s + (ultimo[n] || 0), 0);
+  const mix = pessoas.map((nome) => ({
+    nome,
+    valor: ultimo[nome] || 0,
+    pct: total > 0 ? ((ultimo[nome] || 0) / total) * 100 : 0,
+  }));
+
+  return { serie, pessoas, mix, total, fimJanela };
+}
