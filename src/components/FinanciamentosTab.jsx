@@ -4,6 +4,7 @@ import Spinner from './Spinner';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { criarFinanciamento, excluirFinanciamento, fetchFinanciamentos } from '../services/financiamentos';
 import { previa } from '../utils/financiamento';
+import { useMembros } from '../hooks/useMembros';
 
 function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -172,6 +173,9 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const calc = useMemo(() => previa(form), [form]);
+  const { membros } = useMembros(orcamentoId);
+  // Quanto cabe a cada um na primeira parcela (só se a divisão foi definida).
+  const divisao = membros.filter((m) => m.percentual > 0);
 
   async function salvar(e) {
     e.preventDefault();
@@ -323,6 +327,22 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
         ) : (
           <p className="text-muted" style={{ fontSize: 12 }}>
             Preencha valor financiado e prazo para ver a parcela.
+          </p>
+        )}
+        {calc && divisao.length > 0 && (
+          <div className="fin-divisao">
+            <span className="text-muted">Cada um paga na primeira parcela</span>
+            {divisao.map((m) => (
+              <div key={m.uid}>
+                <span>{m.nome} · {m.percentual.toLocaleString('pt-BR')}%</span>
+                <b>{brl((calc.primeira * m.percentual) / 100)}</b>
+              </div>
+            ))}
+          </div>
+        )}
+        {calc && divisao.length === 0 && membros.length > 1 && (
+          <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>
+            Dica: defina a parte de cada integrante (menu do orçamento → Integrantes) para a parcela ser dividida entre vocês.
           </p>
         )}
         <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>

@@ -1,21 +1,58 @@
 import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useMembros } from '../hooks/useMembros';
-import { definirCorMembro } from '../services/orcamentos';
+import { definirCorMembro, definirPercentuais } from '../services/orcamentos';
 import { PALETA_INTEGRANTES, EVENTO_CORES } from '../hooks/useCoresIntegrantes';
 
 export default function MembersModal({ orcamento, onClose }) {
   const { membros, loading } = useMembros(orcamento?.id);
   const [cores, setCores] = useState({});
   const [erro, setErro] = useState('');
+  const [pcts, setPcts] = useState({});
+  const [salvandoPct, setSalvandoPct] = useState(false);
+  const [pctSalvo, setPctSalvo] = useState(false);
 
   useEffect(() => {
     const inicial = {};
+    const p = {};
     membros.forEach((m) => {
       if (m.cor) inicial[m.uid] = m.cor;
+      if (m.percentual != null) p[m.uid] = String(m.percentual);
     });
     setCores(inicial);
+    setPcts(p);
   }, [membros]);
+
+  const somaPct = membros.reduce((s, m) => s + (Number(pcts[m.uid]) || 0), 0);
+  const pctFecha = membros.length > 0 && Math.abs(somaPct - 100) < 0.01;
+
+  function dividirIgual() {
+    const n = membros.length;
+    const base = Math.floor((10000 / n)) / 100;
+    const novo = {};
+    membros.forEach((m, i) => {
+      novo[m.uid] = String(i === n - 1 ? Math.round((100 - base * (n - 1)) * 100) / 100 : base);
+    });
+    setPcts(novo);
+    setPctSalvo(false);
+  }
+
+  async function salvarPercentuais() {
+    setErro('');
+    setSalvandoPct(true);
+    try {
+      await definirPercentuais(
+        orcamento.id,
+        membros.map((m) => ({ uid: m.uid, percentual: Number(pcts[m.uid]) || 0 }))
+      );
+      setPctSalvo(true);
+      window.dispatchEvent(new Event(EVENTO_CORES));
+    } catch (e) {
+      setErro(e.message || 'Não foi possível salvar os percentuais.');
+    } finally {
+      setSalvandoPct(false);
+    }
+  }
 
   if (!orcamento) return null;
 
@@ -75,6 +112,25 @@ export default function MembersModal({ orcamento, onClose }) {
                   </span>
                   {m.uid === orcamento.criadoPorUid && <span className="members-list__badge">criador</span>}
                 </div>
+                <label className="integrante__pct">
+                  <span>Parte no financiamento</span>
+                  <span className="integrante__pct-campo">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={pcts[m.uid] ?? ''}
+                      placeholder="0"
+                      onChange={(e) => {
+                        setPcts((p) => ({ ...p, [m.uid]: e.target.value }));
+                        setPctSalvo(false);
+                      }}
+                    />
+                    <b>%</b>
+                  </span>
+                </label>
                 <div className="integrante__cores" role="radiogroup" aria-label={`Cor de ${m.nome || m.email}`}>
                   {PALETA_INTEGRANTES.map((cor) => (
                     <button
@@ -95,6 +151,31 @@ export default function MembersModal({ orcamento, onClose }) {
             );
           })}
         </div>
+
+        {membros.length > 1 && (
+          <div className="rateio">
+            <div className="rateio__linha">
+              <span>Soma das partes</span>
+              <b className={pctFecha ? 'text-good' : 'text-danger'}>{somaPct.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%</b>
+            </div>
+            <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+              Cada parcela do financiamento é lançada dividida entre os integrantes nessa proporção.
+            </p>
+            <div className="rateio__botoes">
+              <button type="button" className="confirmar-exclusao__neutro" onClick={dividirIgual}>
+                Dividir igualmente
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                disabled={!pctFecha || salvandoPct}
+                onClick={salvarPercentuais}
+              >
+                {salvandoPct ? 'salvando…' : pctSalvo ? 'salvo ✓' : 'salvar divisão'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <p className="text-muted" style={{ fontSize: 12 }}>
           Compartilhe o código <strong className="mono">{orcamento.codigo}</strong> pra convidar mais gente.

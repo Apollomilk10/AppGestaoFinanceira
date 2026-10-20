@@ -26,6 +26,10 @@ export function definirCorMembro(orcamentoId, uid, cor) {
   return apiPut(`/orcamentos/${orcamentoId}/membros/${uid}/cor`, { cor });
 }
 
+export function definirPercentuais(orcamentoId, itens) {
+  return apiPut(`/orcamentos/${orcamentoId}/membros-percentuais`, { itens });
+}
+
 export async function fetchMembros(orcamentoId) {
   const result = await apiGet(`/orcamentos/${orcamentoId}/membros`);
   return result.rows;

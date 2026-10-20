@@ -40,3 +40,19 @@ def resumo(valor: float, taxa_anual: float, prazo: int, sistema: str, pagas: int
         "saldoDevedor": round(saldos[pagas], 2),
         "totalRestante": round(sum(restantes), 2),
     }
+
+
+def ratear(valor: float, percentuais: dict):
+    """Divide `valor` entre os integrantes pelos percentuais (uid -> %),
+    em centavos; a sobra de arredondamento vai para quem tem a maior fatia.
+    Sem percentuais definidos, devolve [] (não há o que ratear)."""
+    ativos = {u: p for u, p in percentuais.items() if p and p > 0}
+    if not ativos:
+        return []
+    total_centavos = round(valor * 100)
+    soma = sum(ativos.values())
+    partes = {u: int(total_centavos * p / soma) for u, p in ativos.items()}
+    resto = total_centavos - sum(partes.values())
+    maior = max(ativos, key=lambda u: ativos[u])
+    partes[maior] += resto
+    return [(u, c / 100) for u, c in partes.items() if c > 0]

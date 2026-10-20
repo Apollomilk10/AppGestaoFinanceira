@@ -1153,3 +1153,57 @@
 .fin-duo > .field {
   min-width: 0;
 }
+
+/* --- Divisão do financiamento entre integrantes -------------------- */
+.integrante__pct {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.integrante__pct-campo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.integrante__pct-campo input {
+  width: 84px;
+  text-align: right;
+}
+
+.rateio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+
+.rateio__linha {
+  display: flex;
+  justify-content: space-between;
+}
+
+.rateio__botoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fin-divisao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.fin-divisao > div {
+  display: flex;
+  justify-content: space-between;
+}

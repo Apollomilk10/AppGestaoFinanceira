@@ -6,6 +6,15 @@ class CorIntegrante(BaseModel):
     cor: str
 
 
+class PercentualIntegrante(BaseModel):
+    uid: str
+    percentual: float
+
+
+class PercentuaisInput(BaseModel):
+    itens: list[PercentualIntegrante]
+
+
 class CriarOrcamento(BaseModel):
     nome: str
 

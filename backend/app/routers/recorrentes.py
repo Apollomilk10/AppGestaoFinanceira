@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import get_current_user
 from ..data import exigir_membro
+from ..financiamento import ratear
 from ..firebase import db
 from ..models import RecorrenteInput
 
@@ -90,6 +91,7 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
     agora = datetime.now(timezone.utc)
     mes_atual = agora.strftime("%Y-%m")
     criados = 0
+    percentuais = None  # carregado só se algum financiamento precisar
 
     docs = db.collection("recorrentes").where("orcamentoId", "==", orcamento_id).where("ativo", "==", True).stream()
     for d in docs:
@@ -114,13 +116,11 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
         valor_parcela = valores[vezes_geradas] if valores and vezes_geradas < len(valores) else data.get("valor", 0)
 
         data_lancamento = agora.replace(day=min(data.get("diaDoMes", 1), 28))
-        db.collection("gastos").add({
+        base = {
             "orcamentoId": orcamento_id,
             "data": data_lancamento.strftime("%d/%m/%Y"),
             "categoria": data.get("categoria", "outro"),
             "descricao": data.get("descricao", "") + sufixo,
-            "valor": valor_parcela,
-            "responsavel": data.get("criadoPorEmail", ""),
             "etapa": data.get("etapa", "nao_especificada"),
             "tipo": data.get("tipo", "despesa"),
             "criadoPorUid": data.get("criadoPorUid"),
@@ -128,7 +128,22 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
             "criadoPorNome": data.get("criadoPorNome", data.get("criadoPorEmail", "")),
             "criadoEm": agora,
             "geradoDeRecorrente": d.id,
-        })
+        }
+        # Parcela de financiamento: um lançamento por integrante, na
+        # proporção definida no orçamento. Sem percentuais, um só.
+        partes = []
+        if data.get("financiamentoId"):
+            if percentuais is None:
+                percentuais = {
+                    m.to_dict().get("uid"): m.to_dict().get("percentual")
+                    for m in db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()
+                }
+            partes = ratear(valor_parcela, percentuais)
+        if partes:
+            for uid_membro, parte in partes:
+                db.collection("gastos").add({**base, "valor": parte, "responsavel": uid_membro})
+        else:
+            db.collection("gastos").add({**base, "valor": valor_parcela, "responsavel": data.get("criadoPorEmail", "")})
 
         atualizacao = {"ultimoMesGerado": mes_atual, "vezesGeradas": numero_parcela}
         if parcelas is not None and numero_parcela >= parcelas:

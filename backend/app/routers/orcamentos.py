@@ -7,7 +7,7 @@ from ..data import gerar_codigo, buscar_orcamento_por_codigo, membro_doc_id, exi
 from ..firebase import db
 import re
 
-from ..models import CriarOrcamento, EntrarOrcamento, CorIntegrante
+from ..models import CriarOrcamento, EntrarOrcamento, CorIntegrante, PercentuaisInput
 
 router = APIRouter(prefix="/orcamentos", tags=["orcamentos"])
 
@@ -121,6 +121,7 @@ async def listar_membros(orcamento_id: str, user: dict = Depends(get_current_use
             "email": d.to_dict().get("email"),
             "nome": d.to_dict().get("nome") or d.to_dict().get("email"),
             "cor": d.to_dict().get("cor"),
+            "percentual": d.to_dict().get("percentual"),
         }
         for d in docs
     ]
@@ -143,6 +144,24 @@ async def definir_cor_membro(
         raise HTTPException(status_code=404, detail="Integrante não encontrado nesse orçamento.")
     ref.update({"cor": cor})
     return {"status": "ok", "cor": cor}
+
+
+@router.put("/{orcamento_id}/membros-percentuais")
+async def definir_percentuais(orcamento_id: str, body: PercentuaisInput, user: dict = Depends(get_current_user)):
+    """Define quanto de cada despesa dividida (hoje: parcela de financiamento)
+    cabe a cada integrante. A soma precisa fechar 100%."""
+    await exigir_membro(orcamento_id, user["uid"])
+    docs = {d.to_dict().get("uid"): d for d in db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()}
+    itens = {i.uid: i.percentual for i in body.itens}
+    if set(itens) != set(docs):
+        raise HTTPException(status_code=400, detail="Informe o percentual de todos os integrantes.")
+    if any(v < 0 or v > 100 for v in itens.values()):
+        raise HTTPException(status_code=400, detail="Cada percentual precisa ficar entre 0 e 100.")
+    if abs(sum(itens.values()) - 100) > 0.01:
+        raise HTTPException(status_code=400, detail="Os percentuais precisam somar 100%.")
+    for uid, v in itens.items():
+        docs[uid].reference.update({"percentual": round(v, 2)})
+    return {"status": "ok"}
 
 
 @router.delete("/{orcamento_id}")
