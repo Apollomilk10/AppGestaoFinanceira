@@ -212,7 +212,7 @@
 .fab {
   background: var(--brand);
   color: var(--on-brand);
-  box-shadow: 0 8px 24px rgba(15, 59, 51, 0.28);
+  box-shadow: 0 8px 24px rgba(30, 42, 58, 0.30);
   /* único botão flutuante: círculo só com o "+", em qualquer largura */
   width: 58px;
   height: 58px;

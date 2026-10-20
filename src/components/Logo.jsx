@@ -5,7 +5,7 @@
  */
 export default function Logo({ size = 32, className = '', tone = 'brand' }) {
   const traco = tone === 'light' ? '#ffffff' : 'var(--brand)';
-  const folha = tone === 'light' ? '#4ec79b' : 'var(--mint)';
+  const folha = tone === 'light' ? '#ff6f61' : 'var(--mint)';
 
   return (
     <svg
@@ -29,7 +29,7 @@ export default function Logo({ size = 32, className = '', tone = 'brand' }) {
       />
       <path
         d="m17.9 30.6 10.6-11.3"
-        stroke={tone === 'light' ? '#0a2c26' : 'var(--panel)'}
+        stroke={tone === 'light' ? '#1e2a3a' : 'var(--panel)'}
         strokeWidth="1.4"
         strokeLinecap="round"
       />

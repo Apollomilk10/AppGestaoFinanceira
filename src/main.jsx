@@ -20,7 +20,7 @@ function mostrarFalha(titulo, detalhe) {
   if (!raiz) return;
   raiz.innerHTML =
     '<div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;' +
-    "gap:12px;padding:28px;font-family:system-ui,sans-serif;color:#0f2b25;background:#f4f7f5;" +
+    "gap:12px;padding:28px;font-family:system-ui,sans-serif;color:#1c2633;background:#f3f5f8;" +
     'line-height:1.5"><strong style="font-size:19px">' +
     titulo +
     "</strong>" +

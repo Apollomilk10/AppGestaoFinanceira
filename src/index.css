@@ -1,36 +1,36 @@
 /* ===================================================================
    Design System "Casa+" — o app de finanças da casa.
-   Verde-escuro de marca (confiança, dinheiro parado), verde-menta como
-   única cor de ação (o que te move: começar, salvar, progredir) e um
-   fundo quase branco levemente esverdeado. Cor saturada só onde o
+   Ardósia de marca (confiança, dinheiro parado), coral como única cor
+   de ação (o que te move: começar, salvar, progredir) e um fundo quase
+   branco levemente azulado. (Os tokens --mint* guardam o coral.) Cor saturada só onde o
    dinheiro pede: entrou, saiu, e a identidade de cada categoria.
    =================================================================== */
 
 :root {
   /* --- Superfícies --- */
-  --bg: #f4f7f5;
+  --bg: #f3f5f8;
   --panel: #ffffff;
-  --panel-2: #f1f5f2;   /* superfície aninhada dentro de um card */
-  --hairline: rgba(15, 59, 51, 0.09);
+  --panel-2: #edf0f4;   /* superfície aninhada dentro de um card */
+  --hairline: rgba(30, 42, 58, 0.09);
 
   /* --- Texto --- */
-  --ink: #0f2b25;
-  --muted: #6b807a;
+  --ink: #1c2633;
+  --muted: #66758a;
 
   /* --- Marca --- */
-  --brand: #0f3b33;          /* verde-escuro: splash, botões sólidos, sidebar */
-  --brand-deep: #0a2c26;
-  --brand-soft: rgba(15, 59, 51, 0.07);
+  --brand: #1e2a3a;          /* ardósia: splash, botões sólidos, sidebar */
+  --brand-deep: #17212e;
+  --brand-soft: rgba(30, 42, 58, 0.07);
   --on-brand: #ffffff;
 
   /* --- Ação (menta) --- */
-  --mint: #4ec79b;
-  --mint-strong: #2fae82;
-  --mint-soft: rgba(78, 199, 155, 0.14);
-  --on-mint: #06251e;
+  --mint: #ff6f61;
+  --mint-strong: #e5493a;
+  --mint-soft: rgba(255, 111, 97, 0.14);
+  --on-mint: #3a0d08;
 
   /* --- Interação --- */
-  --link: #1d8f73;
+  --link: #d63f2f;
 
   /* --- Semântica de dinheiro --- */
   --good: #1f9d6b;
@@ -47,9 +47,9 @@
   --cat-outros: #94a3b8;
 
   /* --- Elevação: sombra suave e larga, nada de borda dura --- */
-  --shadow-sm: 0 1px 2px rgba(15, 59, 51, 0.04);
-  --shadow-md: 0 2px 6px rgba(15, 59, 51, 0.04), 0 14px 34px rgba(15, 59, 51, 0.07);
-  --shadow-nav: 0 -1px 0 var(--hairline), 0 -10px 28px rgba(15, 59, 51, 0.06);
+  --shadow-sm: 0 1px 2px rgba(30, 42, 58, 0.04);
+  --shadow-md: 0 2px 6px rgba(30, 42, 58, 0.04), 0 14px 34px rgba(30, 42, 58, 0.07);
+  --shadow-nav: 0 -1px 0 var(--hairline), 0 -10px 28px rgba(30, 42, 58, 0.06);
 
   /* --- Raios: cartões bem arredondados, como no layout --- */
   --r-sm: 12px;
@@ -79,25 +79,25 @@
 }
 
 [data-theme='dark'] {
-  --bg: #08120f;
-  --panel: #11201b;
-  --panel-2: #182a24;
+  --bg: #0b1017;
+  --panel: #121a25;
+  --panel-2: #1c2736;
   --hairline: rgba(255, 255, 255, 0.09);
 
-  --ink: #e6f0ec;
-  --muted: #8ba39b;
+  --ink: #e8edf3;
+  --muted: #8d9db0;
 
-  --brand: #4ec79b;
-  --brand-deep: #0a2c26;
-  --brand-soft: rgba(78, 199, 155, 0.14);
-  --on-brand: #06251e;
+  --brand: #ff6f61;
+  --brand-deep: #1e2a3a;
+  --brand-soft: rgba(255, 111, 97, 0.14);
+  --on-brand: #3a0d08;
 
-  --mint: #4ec79b;
-  --mint-strong: #6ad7b0;
-  --mint-soft: rgba(78, 199, 155, 0.16);
-  --on-mint: #06251e;
+  --mint: #ff6f61;
+  --mint-strong: #ff8f84;
+  --mint-soft: rgba(255, 111, 97, 0.16);
+  --on-mint: #3a0d08;
 
-  --link: #6ad7b0;
+  --link: #ff8f84;
 
   --good: #35c68d;
   --good-soft: rgba(53, 198, 141, 0.15);
