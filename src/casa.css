@@ -335,12 +335,25 @@
 /* --- Sidebar: painel verde-escuro, como no layout ------------------ */
 .sidebar {
   background: var(--brand-deep);
-  color: #e9f4f0;
+  color: #eef2f7;
+  /* O painel é escuro nos dois temas: redefine os tokens de texto e
+     superfície aqui dentro, pra tudo que usa var(--ink) etc. ficar legível
+     (no modo claro o texto escuro sumia sobre o fundo ardósia). */
+  --ink: #eef2f7;
+  --muted: rgba(238, 242, 247, 0.62);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --hairline: rgba(255, 255, 255, 0.14);
+  --bg: rgba(255, 255, 255, 0.08);
+  --panel: rgba(255, 255, 255, 0.1);
+  --panel-2: rgba(255, 255, 255, 0.08);
+  --accent: var(--mint);
+  --accent-soft: rgba(255, 255, 255, 0.12);
+  --link: var(--mint);
 }
 
 .sidebar .text-muted,
 .sidebar .eyebrow {
-  color: rgba(233, 244, 240, 0.6);
+  color: rgba(238, 242, 247, 0.62);
 }
 
 /* ===================================================================

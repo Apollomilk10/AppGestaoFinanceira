@@ -75,7 +75,7 @@ export default function Sidebar({ open, onClose, onOpenProfile, rows = [] }) {
       <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
         <div className="sidebar__header">
           <span className="sidebar__brand">
-            <Logo size={26} />
+            <Logo size={26} tone="light" />
             <strong>Finanças &amp; Orçamento</strong>
           </span>
           <button className="icon-button" onClick={onClose} aria-label="Fechar menu">
