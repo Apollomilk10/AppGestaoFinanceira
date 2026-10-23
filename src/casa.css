@@ -1220,3 +1220,45 @@
   display: flex;
   justify-content: space-between;
 }
+
+/* --- Parcelas exatas / importar PDF do banco ----------------------- */
+.fin-importar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--mint-strong);
+  color: var(--mint-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fin-importar input {
+  display: none;
+}
+
+.fin-importar--topo {
+  margin: 0 0 4px;
+  align-self: flex-start;
+}
+
+.fin-parcelas {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.fin-parcelas summary {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+.fin-parcelas > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--panel-border);
+}

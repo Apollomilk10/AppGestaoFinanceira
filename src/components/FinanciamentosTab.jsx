@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Landmark, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, FileUp, Landmark, Plus, Trash2 } from 'lucide-react';
 import Spinner from './Spinner';
 import { useOrcamentos } from '../context/OrcamentosContext';
-import { criarFinanciamento, excluirFinanciamento, fetchFinanciamentos } from '../services/financiamentos';
+import { atualizarCronograma, criarFinanciamento, excluirFinanciamento, fetchFinanciamentos } from '../services/financiamentos';
+import { lerPdfDDC } from '../utils/ddcParser';
 import { previa } from '../utils/financiamento';
 import { useMembros } from '../hooks/useMembros';
 
@@ -33,6 +34,8 @@ export default function FinanciamentosTab({ onChanged }) {
   const [erro, setErro] = useState('');
   const [abrindo, setAbrindo] = useState(false);
   const [confirmando, setConfirmando] = useState(null);
+  const [importando, setImportando] = useState(null); // id do cartão lendo o PDF
+  const [aviso, setAviso] = useState('');
 
   const carregar = useCallback(async () => {
     if (!filtroId) return;
@@ -50,6 +53,29 @@ export default function FinanciamentosTab({ onChanged }) {
     setCarregando(true);
     carregar();
   }, [carregar]);
+
+  async function importarPdf(f, arquivo) {
+    if (!arquivo) return;
+    setImportando(f.id);
+    setErro('');
+    setAviso('');
+    try {
+      const r = await lerPdfDDC(arquivo);
+      await atualizarCronograma(filtroId, f.id, {
+        cronograma: r.cronograma,
+        valorFinanciado: r.valorOperacao,
+        taxaAnual: r.taxaAnual,
+        sistema: r.sistema,
+      });
+      await carregar();
+      onChanged?.();
+      setAviso(`Parcelas do banco importadas: ${r.cronograma.length} parcelas, ${r.pagas} já pagas.`);
+    } catch (e) {
+      setErro(e.message || 'Não foi possível importar o PDF.');
+    } finally {
+      setImportando(null);
+    }
+  }
 
   async function excluir(f) {
     try {
@@ -75,6 +101,7 @@ export default function FinanciamentosTab({ onChanged }) {
       </section>
 
       {erro && <p className="field-error">{erro}</p>}
+      {aviso && <p className="text-good" style={{ fontSize: 13 }}>{aviso}</p>}
 
       {carregando && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
@@ -101,6 +128,7 @@ export default function FinanciamentosTab({ onChanged }) {
                 <strong>{f.nome}</strong>
                 <span className="text-muted">
                   {f.sistema === 'sac' ? 'SAC' : 'Price'} · {f.taxaAnual.toLocaleString('pt-BR')}% a.a. · vence dia {f.diaVencimento}
+                  {f.exato ? ' · parcelas do banco' : ''}
                 </span>
               </div>
               <button
@@ -127,6 +155,36 @@ export default function FinanciamentosTab({ onChanged }) {
               <div><span>Falta pagar</span><b>{brl(f.totalRestante)}</b></div>
               <div><span>Financiado</span><b>{brl(f.valorFinanciado)}</b></div>
             </div>
+
+            {f.proximas?.length > 0 && (
+              <details className="fin-parcelas">
+                <summary>Próximas parcelas</summary>
+                {f.proximas.map((p) => (
+                  <div key={p.n}>
+                    <span>{p.n}/{f.prazoMeses} · {new Date(`${p.d}T00:00:00`).toLocaleDateString('pt-BR')}</span>
+                    <b>{brl(p.v)}</b>
+                  </div>
+                ))}
+              </details>
+            )}
+
+            <label className="fin-importar">
+              <FileUp size={15} />
+              {importando === f.id
+                ? 'lendo o PDF…'
+                : f.exato
+                  ? 'Atualizar com um novo PDF do banco'
+                  : 'Usar as parcelas exatas do PDF do banco'}
+              <input
+                type="file"
+                accept="application/pdf"
+                disabled={importando === f.id}
+                onChange={(e) => {
+                  importarPdf(f, e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+              />
+            </label>
 
             {!f.ativo && f.parcelasRestantes === 0 && (
               <p className="text-good" style={{ fontSize: 13, marginTop: 8 }}>Quitado 🎉</p>
@@ -172,7 +230,47 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
   const [erro, setErro] = useState('');
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
-  const calc = useMemo(() => previa(form), [form]);
+  const [pdf, setPdf] = useState(null); // cronograma lido do PDF do banco
+  const [lendo, setLendo] = useState(false);
+  const calcAuto = useMemo(() => previa(form), [form]);
+  // Com o PDF, a prévia vem das parcelas do banco, não do cálculo.
+  const calc = useMemo(() => {
+    if (!pdf) return calcAuto;
+    const pend = pdf.cronograma.filter((p) => !p.p);
+    const pagas = pdf.cronograma.filter((p) => p.p);
+    return {
+      restantes: pend.length,
+      primeira: pend[0]?.v ?? 0,
+      ultima: pend[pend.length - 1]?.v ?? 0,
+      saldoDevedor: pagas.length ? pagas[pagas.length - 1].s : pdf.valorOperacao,
+      totalRestante: pend.reduce((s, p) => s + p.v, 0),
+    };
+  }, [pdf, calcAuto]);
+
+  async function lerPdf(arquivo) {
+    if (!arquivo) return;
+    setLendo(true);
+    setErro('');
+    try {
+      const r = await lerPdfDDC(arquivo);
+      const pend = r.cronograma.filter((p) => !p.p);
+      setPdf(r);
+      setForm((p) => ({
+        ...p,
+        valorFinanciado: String(r.valorOperacao ?? p.valorFinanciado),
+        taxaAnual: String(r.taxaAnual ?? p.taxaAnual),
+        prazoMeses: String(r.cronograma.length),
+        parcelasPagas: String(r.pagas),
+        sistema: r.sistema || p.sistema,
+        diaVencimento: String(Number(pend[0]?.d.slice(8, 10)) || p.diaVencimento),
+        valorParcela: '',
+      }));
+    } catch (e) {
+      setErro(e.message || 'Não foi possível ler o PDF.');
+    } finally {
+      setLendo(false);
+    }
+  }
   const { membros } = useMembros(orcamentoId);
   // Quanto cabe a cada um na primeira parcela (só se a divisão foi definida).
   const divisao = membros.filter((m) => m.percentual > 0);
@@ -196,6 +294,7 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
         diaVencimento: Number(form.diaVencimento) || 5,
         seguroMensal: Number(form.seguroMensal) || 0,
         valorParcela: Number(form.valorParcela) > 0 ? Number(form.valorParcela) : null,
+        ...(pdf ? { cronograma: pdf.cronograma } : {}),
       });
       onSaved();
     } catch (err) {
@@ -211,6 +310,20 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
           <h2>Novo financiamento</h2>
           <button type="button" className="link-button mono" onClick={onClose}>fechar</button>
         </div>
+
+        <label className="fin-importar fin-importar--topo">
+          <FileUp size={15} />
+          {lendo ? 'lendo o PDF…' : pdf ? `PDF lido: ${pdf.cronograma.length} parcelas, ${pdf.pagas} pagas` : 'Importar o PDF do banco (parcelas exatas)'}
+          <input
+            type="file"
+            accept="application/pdf"
+            disabled={lendo}
+            onChange={(e) => {
+              lerPdf(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </label>
 
         <label className="field">
           <span>Nome</span>
@@ -315,7 +428,7 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
         {calc ? (
           <div className="fin-previa">
             <div>
-              <span className="text-muted">{form.valorParcela ? 'Parcela' : 'Primeira parcela (estimada)'}</span>
+              <span className="text-muted">{form.valorParcela || pdf ? 'Próxima parcela' : 'Primeira parcela (estimada)'}</span>
               <b>{brl(calc.primeira)}</b>
             </div>
             {form.sistema === 'sac' && !form.valorParcela && (
@@ -346,8 +459,9 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
           </p>
         )}
         <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>
-          Vai criar um gasto recorrente em Moradia, todo dia {form.diaVencimento || 5}, pelas {calc?.restantes ?? '…'} parcelas que faltam.
-          A taxa é a efetiva anual do contrato; a TR e reajustes não entram — se a parcela do banco for diferente, informe o valor exato.
+          {pdf
+            ? `Vai lançar cada uma das ${calc.restantes} parcelas que faltam no vencimento e no valor do demonstrativo do banco (Moradia).`
+            : `Vai criar um gasto recorrente em Moradia, todo dia ${form.diaVencimento || 5}, pelas ${calc?.restantes ?? '…'} parcelas que faltam. A taxa é a efetiva anual do contrato; a TR e reajustes não entram — se tiver o PDF do banco, importe-o acima.`}
         </p>
 
         {erro && <p className="field-error">{erro}</p>}

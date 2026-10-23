@@ -84,6 +84,21 @@ class LimiteInput(BaseModel):
     valorLimite: float
 
 
+class ParcelaExata(BaseModel):
+    n: int                # número da parcela no contrato
+    d: str                # vencimento, AAAA-MM-DD
+    v: float              # valor total da parcela (juros, amortização, seguros)
+    s: float = 0          # saldo devedor depois dessa parcela
+    p: bool = False       # já paga
+
+
+class CronogramaInput(BaseModel):
+    cronograma: list[ParcelaExata]
+    valorFinanciado: Optional[float] = None
+    taxaAnual: Optional[float] = None
+    sistema: Optional[str] = None
+
+
 class FinanciamentoInput(BaseModel):
     nome: str
     valorFinanciado: float
@@ -94,3 +109,4 @@ class FinanciamentoInput(BaseModel):
     diaVencimento: int = 5
     seguroMensal: float = 0  # seguros e tarifas somados a cada parcela
     valorParcela: Optional[float] = None  # se já souber a parcela, vale esta (constante)
+    cronograma: Optional[list[ParcelaExata]] = None  # parcelas exatas do banco (vale sobre o cálculo)

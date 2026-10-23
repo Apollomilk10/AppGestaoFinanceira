@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import get_current_user
 from ..data import exigir_membro
-from ..financiamento import ratear
+from ..financiamento import agenda_pendente, ratear
 from ..firebase import db
 from ..models import RecorrenteInput
 
@@ -29,6 +29,8 @@ def _serializar(doc) -> dict:
         "parcelaInicial": data.get("parcelaInicial", 1),
         "parcelasTotal": data.get("parcelasTotal"),
         "financiamentoId": data.get("financiamentoId"),
+        # parcelas exatas (financiamento importado do banco): só o que falta
+        "agenda": agenda_pendente(data["cronograma"], data.get("parcelasGeradas")) if data.get("cronograma") else None,
     }
 
 
@@ -96,6 +98,53 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
     docs = db.collection("recorrentes").where("orcamentoId", "==", orcamento_id).where("ativo", "==", True).stream()
     for d in docs:
         data = d.to_dict()
+
+        # Financiamento com parcelas exatas do banco: cada parcela é lançada
+        # no próprio vencimento e valor. Parcelas de meses que passaram sem o
+        # app abrir são lançadas de uma vez (com a data original).
+        if data.get("cronograma"):
+            if percentuais is None:
+                percentuais = {
+                    m.to_dict().get("uid"): m.to_dict().get("percentual")
+                    for m in db.collection("membros").where("orcamentoId", "==", orcamento_id).stream()
+                }
+            geradas = list(data.get("parcelasGeradas") or [])
+            for it in data["cronograma"]:
+                if it["p"] or it["n"] in geradas:
+                    continue
+                if it["d"][:7] > mes_atual:
+                    break
+                ano, mes, dia = it["d"].split("-")
+                base = {
+                    "orcamentoId": orcamento_id,
+                    "data": f"{dia}/{mes}/{ano}",
+                    "categoria": data.get("categoria", "moradia"),
+                    "descricao": f"{data.get('descricao', '')} (parcela {it['n']}/{data.get('parcelasTotal') or len(data['cronograma'])})",
+                    "etapa": data.get("etapa", "nao_especificada"),
+                    "tipo": data.get("tipo", "despesa"),
+                    "criadoPorUid": data.get("criadoPorUid"),
+                    "criadoPorEmail": data.get("criadoPorEmail", ""),
+                    "criadoPorNome": data.get("criadoPorNome", data.get("criadoPorEmail", "")),
+                    "criadoEm": agora,
+                    "geradoDeRecorrente": d.id,
+                }
+                partes = ratear(it["v"], percentuais)
+                if partes:
+                    for uid_membro, parte in partes:
+                        db.collection("gastos").add({**base, "valor": parte, "responsavel": uid_membro})
+                else:
+                    db.collection("gastos").add({**base, "valor": it["v"], "responsavel": data.get("criadoPorEmail", "")})
+                geradas.append(it["n"])
+                criados += 1
+            restantes_pend = [x for x in data["cronograma"] if not x["p"] and x["n"] not in geradas]
+            d.reference.update({
+                "parcelasGeradas": geradas,
+                "vezesGeradas": len(geradas),
+                "ultimoMesGerado": mes_atual,
+                "ativo": bool(restantes_pend),
+            })
+            continue
+
         if data.get("ultimoMesGerado") == mes_atual:
             continue
 

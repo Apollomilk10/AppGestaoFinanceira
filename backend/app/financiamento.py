@@ -56,3 +56,65 @@ def ratear(valor: float, percentuais: dict):
     maior = max(ativos, key=lambda u: ativos[u])
     partes[maior] += resto
     return [(u, c / 100) for u, c in partes.items() if c > 0]
+
+
+# --- Cronograma exato (demonstrativo do banco) ---------------------------
+
+def normalizar_cronograma(itens) -> list:
+    """Valida e devolve o cronograma como lista de dicts compactos
+    ({n, d, v, s, p}), em ordem, com parcelas 1..N sem buracos."""
+    from datetime import date
+
+    crono = sorted(
+        ({"n": i.n, "d": i.d, "v": round(i.v, 2), "s": round(i.s, 2), "p": bool(i.p)} for i in itens),
+        key=lambda x: x["n"],
+    )
+    if not crono or len(crono) > 480:
+        raise ValueError("Cronograma vazio ou com mais de 480 parcelas.")
+    if [x["n"] for x in crono] != list(range(1, len(crono) + 1)):
+        raise ValueError("As parcelas precisam ser sequenciais, de 1 até a última.")
+    ultima = None
+    for x in crono:
+        try:
+            dia = date.fromisoformat(x["d"])
+        except ValueError:
+            raise ValueError(f"Data inválida na parcela {x['n']}.")
+        if x["v"] <= 0:
+            raise ValueError(f"Valor inválido na parcela {x['n']}.")
+        if ultima and dia <= ultima:
+            raise ValueError("Os vencimentos precisam estar em ordem crescente.")
+        ultima = dia
+    # parcelas pagas vêm sempre antes das pendentes
+    vistas_pendente = False
+    for x in crono:
+        if not x["p"]:
+            vistas_pendente = True
+        elif vistas_pendente:
+            raise ValueError("Há parcela paga depois de uma pendente.")
+    return crono
+
+
+def agenda_pendente(crono: list, geradas) -> list:
+    """Parcelas ainda não pagas nem lançadas: [{n, mes, valor}]."""
+    geradas = set(geradas or [])
+    return [
+        {"n": x["n"], "mes": x["d"][:7], "valor": x["v"]}
+        for x in crono
+        if not x["p"] and x["n"] not in geradas
+    ]
+
+
+def situacao_cronograma(crono: list, geradas, valor_financiado: float) -> dict:
+    geradas = set(geradas or [])
+    lancadas = [x for x in crono if x["p"] or x["n"] in geradas]
+    pend = [x for x in crono if not x["p"] and x["n"] not in geradas]
+    saldo = lancadas[-1]["s"] if lancadas else valor_financiado
+    return {
+        "parcelasPagas": len(lancadas),
+        "parcelasRestantes": len(pend),
+        "proximaParcela": pend[0]["v"] if pend else 0,
+        "proximaData": pend[0]["d"] if pend else None,
+        "saldoDevedor": round(saldo, 2),
+        "totalRestante": round(sum(x["v"] for x in pend), 2),
+        "proximas": [{"n": x["n"], "d": x["d"], "v": x["v"]} for x in pend[:12]],
+    }

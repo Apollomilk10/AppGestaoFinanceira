@@ -268,8 +268,20 @@ export function projecaoMensalFutura(recorrentes, offsetAlvo, mesAtualStr) {
   let despesas = 0;
   let receitas = 0;
 
+  // Mês-alvo (AAAA-MM), para financiamentos com parcelas exatas do banco.
+  const [anoBase, mesBase] = mesAtualStr.split('-').map(Number);
+  const alvo = new Date(anoBase, mesBase - 1 + offsetAlvo, 1);
+  const mesAlvoStr = `${alvo.getFullYear()}-${String(alvo.getMonth() + 1).padStart(2, '0')}`;
+
   recorrentes.forEach((r) => {
     if (!r.ativo) return;
+    if (Array.isArray(r.agenda)) {
+      // Parcelas ainda não lançadas, cada uma no seu mês e valor.
+      r.agenda.forEach((a) => {
+        if (a.mes === mesAlvoStr) despesas += a.valor;
+      });
+      return;
+    }
     const jaGerouEsteMes = r.ultimoMesGerado === mesAtualStr;
     const proximoOffset = jaGerouEsteMes ? 1 : 0;
 
