@@ -4,6 +4,7 @@ import TagIcon from './TagIcon';
 import EditExpenseSheet from './EditExpenseSheet';
 import LimitesPanel from './LimitesPanel';
 import RecorrentesModal from './RecorrentesModal';
+import Lixeira, { Desfazer, avisarLixeira } from './Lixeira';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { useCategories } from '../context/CategoriesContext';
 import { deleteGasto } from '../services/appsScript';
@@ -16,6 +17,7 @@ export default function ManageTab({ rows, onChanged, onDeleted, categoriaFiltro 
   const [confirmingId, setConfirmingId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [desfazer, setDesfazer] = useState(null); // { id, texto }
 
   // Vindo de "Onde o dinheiro foi" no Início, a lista chega já filtrada
   // pela categoria tocada; o chip permite voltar a ver tudo.
@@ -64,7 +66,16 @@ export default function ManageTab({ rows, onChanged, onDeleted, categoriaFiltro 
       setConfirmingId(null);
       // Remove da tela na hora: recarregar do servidor logo após a exclusão
       // podia trazer o lançamento de volta por um instante.
-      onDeleted?.(resultado?.excluidos?.length ? resultado.excluidos : [row.id]);
+      const ids = resultado?.excluidos?.length ? resultado.excluidos : [row.id];
+      onDeleted?.(ids);
+      if (resultado?.lixeiraId) {
+        setDesfazer({
+          id: resultado.lixeiraId,
+          orcamentoId: row.orcamentoId,
+          texto: ids.length > 1 ? `${ids.length} lançamentos excluídos.` : 'Lançamento excluído.',
+        });
+        avisarLixeira();
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Não foi possível excluir.');
@@ -211,6 +222,18 @@ export default function ManageTab({ rows, onChanged, onDeleted, categoriaFiltro 
           );
         })}
       </div>
+
+      {filtroId && <Lixeira orcamentoId={filtroId} onRestaurado={onChanged} />}
+
+      {desfazer && (
+        <Desfazer
+          texto={desfazer.texto}
+          orcamentoId={desfazer.orcamentoId}
+          lixeiraId={desfazer.id}
+          onRestaurado={onChanged}
+          onFechar={() => setDesfazer(null)}
+        />
+      )}
 
       {editing && (
         <EditExpenseSheet row={editing} onClose={() => setEditing(null)} onSaved={onChanged} />

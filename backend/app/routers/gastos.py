@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from ..auth import get_current_user
 from ..data import exigir_membro
 from ..firebase import db
+from ..lixeira import guardar
 from ..models import GastoInput
 
 router = APIRouter(tags=["gastos"])
@@ -176,12 +177,20 @@ async def excluir_gasto(
     data = doc.to_dict()
     recorrente_id = data.get("geradoDeRecorrente")
 
+    rec_ref = db.collection("recorrentes").document(recorrente_id) if recorrente_id else None
+    rec = rec_ref.get() if rec_ref is not None else None
+    rec_data = rec.to_dict() if rec is not None and rec.exists else {}
+    de_financiamento = bool(rec_data.get("financiamentoId"))
+    nome = data.get("descricao") or "Lançamento"
+
     if escopo == "este" or not recorrente_id:
+        lixeira_id = guardar(orcamento_id, user, "lancamentos", nome, [("gastos", gasto_id, data)],
+                             valor=data.get("valor", 0) or 0, de_financiamento=de_financiamento)
         ref.delete()
-        return {"status": "ok", "excluidos": [gasto_id]}
+        return {"status": "ok", "excluidos": [gasto_id], "lixeiraId": lixeira_id}
 
     data_corte = _data_br(data.get("data", ""))
-    excluidos = []
+    apagar = []
     irmaos = db.collection("gastos").where("geradoDeRecorrente", "==", recorrente_id).stream()
     for d in irmaos:
         dd = d.to_dict()
@@ -189,19 +198,32 @@ async def excluir_gasto(
             continue
         data_irmao = _data_br(dd.get("data", ""))
         if d.id == gasto_id or data_corte is None or (data_irmao is not None and data_irmao >= data_corte):
-            d.reference.delete()
-            excluidos.append(d.id)
-    if gasto_id not in excluidos:
-        ref.delete()
-        excluidos.append(gasto_id)
+            apagar.append((d.id, dd, d.reference))
+    if gasto_id not in [i for i, _, _ in apagar]:
+        apagar.append((gasto_id, data, ref))
 
     # encerra a recorrência: nenhum mês novo será gerado a partir daqui
-    rec_ref = db.collection("recorrentes").document(recorrente_id)
-    rec = rec_ref.get()
-    if rec.exists and rec.to_dict().get("orcamentoId") == orcamento_id:
+    alteracoes = []
+    if rec_data and rec_data.get("orcamentoId") == orcamento_id:
+        alteracoes.append(("recorrentes", recorrente_id, {"ativo": rec_data.get("ativo", True), "encerradoEm": rec_data.get("encerradoEm")}))
+
+    lixeira_id = guardar(
+        orcamento_id, user, "lancamentos", _sem_sufixo(nome),
+        [("gastos", i, dd) for i, dd, _ in apagar], alteracoes,
+        valor=sum((dd.get("valor", 0) or 0) for _, dd, _ in apagar), de_financiamento=de_financiamento,
+    )
+    for _, _, r in apagar:
+        r.delete()
+    if alteracoes:
         rec_ref.update({"ativo": False, "encerradoEm": datetime.now(timezone.utc)})
 
-    return {"status": "ok", "excluidos": excluidos}
+    return {"status": "ok", "excluidos": [i for i, _, _ in apagar], "lixeiraId": lixeira_id}
+
+
+def _sem_sufixo(descricao: str) -> str:
+    """'Casa (parcela 4/420)' -> 'Casa' (para o nome do grupo na lixeira)."""
+    import re
+    return re.sub(r"\s*\((parcela \d+/\d+|recorrente)\)\s*$", "", descricao) or descricao
 
 
 @router.get("/orcamentos/{orcamento_id}/por-integrante")

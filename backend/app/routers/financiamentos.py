@@ -6,6 +6,7 @@ from ..auth import get_current_user
 from ..data import exigir_membro, membro_doc_id
 from ..financiamento import resumo, normalizar_cronograma, situacao_cronograma
 from ..firebase import db
+from ..lixeira import guardar
 from ..models import FinanciamentoInput, CronogramaInput
 
 router = APIRouter(tags=["financiamentos"])
@@ -226,11 +227,21 @@ async def excluir_financiamento(orcamento_id: str, financiamento_id: str, user: 
     doc = ref.get()
     if not doc.exists or doc.to_dict().get("orcamentoId") != orcamento_id:
         raise HTTPException(status_code=404, detail="Financiamento não encontrado.")
-    rec_id = doc.to_dict().get("recorrenteId")
-    if rec_id:
-        db.collection("recorrentes").document(rec_id).delete()
+    fin = doc.to_dict()
+    docs = [("financiamentos", financiamento_id, fin)]
+    rec_id = fin.get("recorrenteId")
+    rec_ref = db.collection("recorrentes").document(rec_id) if rec_id else None
+    if rec_ref is not None:
+        rec = rec_ref.get()
+        if rec.exists:
+            docs.append(("recorrentes", rec_id, rec.to_dict()))
+    tipo = fin.get("tipo", "financiamento")
+    lixeira_id = guardar(orcamento_id, user, tipo, fin.get("nome", ""), docs,
+                         valor=fin.get("valorFinanciado", 0) or 0, de_financiamento=True)
+    if rec_ref is not None:
+        rec_ref.delete()
     ref.delete()
-    return {"status": "ok"}
+    return {"status": "ok", "lixeiraId": lixeira_id}
 
 
 @router.put("/orcamentos/{orcamento_id}/financiamentos/{financiamento_id}/cronograma")

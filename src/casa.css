@@ -1289,3 +1289,122 @@
   letter-spacing: 0;
   font-weight: 500;
 }
+
+/* --- Lixeira e desfazer ---------------------------------------------- */
+.desfazer {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  z-index: 55;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 16px;
+  border-radius: 14px;
+  background: var(--brand-deep);
+  color: #eef2f7;
+  box-shadow: var(--shadow-md);
+  font-size: 13.5px;
+}
+
+.desfazer__texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.desfazer__botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--mint);
+  color: var(--on-mint);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.desfazer__fechar {
+  border: none;
+  background: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.lixeira__cabeca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lixeira__ver {
+  margin-left: auto;
+  font-weight: 500;
+  font-size: 12.5px;
+}
+
+.lixeira__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--panel-border);
+}
+
+.lixeira__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lixeira__titulo {
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.lixeira__sub {
+  font-size: 12px;
+}
+
+.lixeira__restaurar {
+  border: 1px solid var(--mint-strong);
+  background: none;
+  color: var(--mint-strong);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+.acumulado__previsto {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.acumulado__previsto b {
+  color: var(--ink);
+}

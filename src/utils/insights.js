@@ -363,19 +363,32 @@ export function cumulativeSeries(rows) {
 
 const SEM_RESPONSAVEL = 'Sem responsável';
 
-/** Últimos N meses (do mais antigo ao mais recente), com rótulo curto. */
-function ultimosMeses(n) {
+/**
+ * Últimos N meses (do mais antigo ao mais recente) e, se pedido, mais
+ * `futuro` meses à frente. Rótulo curto; quando a janela cruza anos, os
+ * meses de janeiro (e o primeiro) levam o ano junto.
+ */
+function ultimosMeses(n, futuro = 0) {
   const now = new Date();
-  return Array.from({ length: n }).map((_, i) => {
+  const total = n + futuro;
+  const lista = Array.from({ length: total }).map((_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
     return {
       ano: d.getFullYear(),
       mes: d.getMonth(),
       inicio: d,
       fim: new Date(d.getFullYear(), d.getMonth() + 1, 1),
+      futuro: i >= n,
       label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
     };
   });
+  const variosAnos = lista.length > 0 && lista[0].ano !== lista[lista.length - 1].ano;
+  if (variosAnos) {
+    lista.forEach((b, i) => {
+      if (i === 0 || b.mes === 0) b.label = `${b.label}/${String(b.ano).slice(2)}`;
+    });
+  }
+  return lista;
 }
 
 /**
@@ -384,7 +397,7 @@ function ultimosMeses(n) {
  * (entradas) ou 'despesa' (saídas). Devolve { serie, pessoas } pronto
  * pra um gráfico de barras agrupadas.
  */
-export function mensalPorPessoa(rows, tipo, meses = 6) {
+export function mensalPorPessoa(rows, tipo, meses = 6, futuro = 0) {
   const base = rows.filter(
     (r) =>
       r.status !== 'projetado' &&
@@ -400,8 +413,8 @@ export function mensalPorPessoa(rows, tipo, meses = 6) {
     .sort((a, b) => b[1] - a[1])
     .map(([nome]) => nome);
 
-  const serie = ultimosMeses(meses).map((b) => {
-    const linha = { label: b.label };
+  const serie = ultimosMeses(meses, futuro).map((b) => {
+    const linha = { label: b.label, futuro: b.futuro };
     pessoas.forEach((nome) => {
       linha[nome] = base
         .filter((r) => nomeDe(r) === nome && r.data >= b.inicio && r.data < b.fim)
@@ -418,9 +431,9 @@ export function mensalPorPessoa(rows, tipo, meses = 6) {
  * desde o primeiro lançamento até o fim de cada mês. A diferença entre as
  * duas linhas é o saldo guardado.
  */
-export function acumuladoMensal(rows, meses = 12) {
+export function acumuladoMensal(rows, meses = 12, futuro = 0) {
   const confirmados = rows.filter((r) => r.status !== 'projetado' && r.data);
-  const buckets = ultimosMeses(meses);
+  const buckets = ultimosMeses(meses, futuro);
   const soma = (lista) => lista.reduce((s, r) => s + r.valor, 0);
 
   let entradas = soma(confirmados.filter((r) => r.tipo === 'receita' && r.data < buckets[0].inicio));
@@ -430,7 +443,7 @@ export function acumuladoMensal(rows, meses = 12) {
     const doMes = confirmados.filter((r) => r.data >= b.inicio && r.data < b.fim);
     entradas += soma(doMes.filter((r) => r.tipo === 'receita'));
     saidas += soma(doMes.filter((r) => r.tipo !== 'receita'));
-    return { label: b.label, entradas, saidas, saldo: entradas - saidas };
+    return { label: b.label, futuro: b.futuro, entradas, saidas, saldo: entradas - saidas };
   });
 }
 
@@ -440,7 +453,7 @@ export function acumuladoMensal(rows, meses = 12) {
  * até o fim de cada um dos últimos N meses. Devolve também o "mix" final —
  * quanto do total acumulado é de cada pessoa.
  */
-export function acumuladoPorPessoa(rows, tipo, meses = 12) {
+export function acumuladoPorPessoa(rows, tipo, meses = 12, futuro = 0) {
   const base = rows.filter(
     (r) =>
       r.status !== 'projetado' &&
@@ -455,10 +468,10 @@ export function acumuladoPorPessoa(rows, tipo, meses = 12) {
     .sort((a, b) => b[1] - a[1])
     .map(([nome]) => nome);
 
-  const buckets = ultimosMeses(meses);
+  const buckets = ultimosMeses(meses, futuro);
   const fimJanela = buckets[buckets.length - 1].fim;
   const serie = buckets.map((b) => {
-    const linha = { label: b.label };
+    const linha = { label: b.label, futuro: b.futuro };
     pessoas.forEach((nome) => {
       linha[nome] = base
         .filter((r) => nomeDe(r) === nome && r.data < b.fim)
@@ -476,4 +489,22 @@ export function acumuladoPorPessoa(rows, tipo, meses = 12) {
   }));
 
   return { serie, pessoas, mix, total, fimJanela };
+}
+
+
+/**
+ * Para gráficos de linha: separa cada série em parte real (até o mês atual)
+ * e parte prevista (do mês atual em diante, para as duas se encontrarem).
+ * A prevista fica em `<chave>__prev`, desenhada tracejada.
+ */
+export function separarPrevisao(serie, chaves) {
+  const ultimoReal = serie.reduce((idx, l, i) => (l.futuro ? idx : i), -1);
+  return serie.map((l, i) => {
+    const nova = { ...l };
+    chaves.forEach((k) => {
+      nova[`${k}__prev`] = i >= ultimoReal && ultimoReal >= 0 && serie.some((x) => x.futuro) ? l[k] : null;
+      if (l.futuro) nova[k] = null;
+    });
+    return nova;
+  });
 }

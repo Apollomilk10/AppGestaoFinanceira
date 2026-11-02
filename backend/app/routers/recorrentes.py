@@ -29,6 +29,9 @@ def _serializar(doc) -> dict:
         "parcelaInicial": data.get("parcelaInicial", 1),
         "parcelasTotal": data.get("parcelasTotal"),
         "financiamentoId": data.get("financiamentoId"),
+        "responsavelUid": data.get("responsavelUid"),
+        "criadoPorUid": data.get("criadoPorUid"),
+        "criadoPorNome": data.get("criadoPorNome", ""),
         # parcelas exatas (financiamento importado do banco): só o que falta
         "agenda": agenda_pendente(data["cronograma"], data.get("parcelasGeradas")) if data.get("cronograma") else None,
     }

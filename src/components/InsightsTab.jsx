@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart,
   Bar,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
@@ -11,7 +12,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { mensalPorPessoa, acumuladoMensal, acumuladoPorPessoa } from '../utils/insights';
+import { mensalPorPessoa, acumuladoMensal, acumuladoPorPessoa, separarPrevisao } from '../utils/insights';
+import { useProjecao } from '../hooks/useProjecao';
 import { useCoresIntegrantes } from '../hooks/useCoresIntegrantes';
 
 
@@ -28,10 +30,18 @@ function brlCurto(v) {
 
 function Dica({ active, payload, label }) {
   if (!active || !payload?.length) return null;
+  const futuro = payload[0]?.payload?.futuro;
+  // Linha real e tracejada se encontram no mês atual: mostra um valor só.
+  const vistos = new Set();
+  const itens = payload.filter((p) => {
+    if (p.value == null || vistos.has(p.name)) return false;
+    vistos.add(p.name);
+    return true;
+  });
   return (
     <div className="chart-tooltip mono">
-      <strong>{label}</strong>
-      {payload.map((p) => (
+      <strong>{label}{futuro ? ' · previsto' : ''}</strong>
+      {itens.map((p) => (
         <span key={p.dataKey} style={{ color: p.color }}>
           {p.name}: {brl(p.value)}
         </span>
@@ -39,6 +49,8 @@ function Dica({ active, payload, label }) {
     </div>
   );
 }
+
+const MESES_PREVISAO = 12;
 
 const EIXO_X = {
   tick: { fill: 'var(--muted)', fontSize: 11 },
@@ -49,7 +61,7 @@ const EIXO_Y = {
   tick: { fill: 'var(--muted)', fontSize: 10 },
   axisLine: false,
   tickLine: false,
-  width: 44,
+  width: 54,
   tickFormatter: brlCurto,
 };
 
@@ -77,7 +89,11 @@ function BarrasPorPessoa({ titulo, subtitulo, dados, corDe }) {
                 fill={corDe(nome, i)}
                 radius={[5, 5, 0, 0]}
                 maxBarSize={22}
-              />
+              >
+                {serie.map((l) => (
+                  <Cell key={l.label} fillOpacity={l.futuro ? 0.38 : 1} />
+                ))}
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>
@@ -94,8 +110,28 @@ export default function InsightsTab({ rows }) {
   const [meses, setMeses] = useState(6);
   const { corDe } = useCoresIntegrantes();
 
-  const entradas = useMemo(() => mensalPorPessoa(rows, 'receita', meses), [rows, meses]);
-  const saidas = useMemo(() => mensalPorPessoa(rows, 'despesa', meses), [rows, meses]);
+  // Chave da previsão: mostra os próximos 12 meses em todos os gráficos,
+  // a partir das contas fixas, parcelamentos e financiamentos.
+  const [previsao, setPrevisao] = useState(() => {
+    try {
+      return localStorage.getItem('casa:relatorios-previsao') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('casa:relatorios-previsao', previsao ? '1' : '0');
+    } catch {
+      /* sem armazenamento: só não lembra a escolha */
+    }
+  }, [previsao]);
+  const { previstos, carregando, erro } = useProjecao(previsao, MESES_PREVISAO);
+  const futuro = previsao ? MESES_PREVISAO : 0;
+  const base = useMemo(() => (previsao ? [...rows, ...previstos] : rows), [rows, previstos, previsao]);
+
+  const entradas = useMemo(() => mensalPorPessoa(base, 'receita', meses, futuro), [base, meses, futuro]);
+  const saidas = useMemo(() => mensalPorPessoa(base, 'despesa', meses, futuro), [base, meses, futuro]);
 
   return (
     <div className="tab-content">
@@ -112,21 +148,38 @@ export default function InsightsTab({ rows }) {
         ))}
       </div>
 
+      <div className="mode-toggle mode-toggle--small" role="group" aria-label="Previsão" style={{ marginTop: 8 }}>
+        <button type="button" className={!previsao ? 'mode-toggle__active' : ''} onClick={() => setPrevisao(false)}>
+          Só o que já aconteceu
+        </button>
+        <button type="button" className={previsao ? 'mode-toggle__active' : ''} onClick={() => setPrevisao(true)}>
+          + próximos 12 meses
+        </button>
+      </div>
+      {previsao && (
+        <p className="text-muted" style={{ fontSize: 12, margin: '6px 2px 0' }}>
+          {carregando
+            ? 'Calculando a previsão…'
+            : erro ||
+              'Meses claros e linhas tracejadas são previsão: contas fixas, parcelamentos e financiamentos que ainda vão cair. Gastos avulsos não entram.'}
+        </p>
+      )}
+
       <BarrasPorPessoa
         titulo="Entradas por mês"
-        subtitulo="Quanto cada um recebeu em cada mês"
+        subtitulo={previsao ? 'Quanto cada um recebeu e vai receber em cada mês' : 'Quanto cada um recebeu em cada mês'}
         dados={entradas}
         corDe={corDe}
       />
 
       <BarrasPorPessoa
         titulo="Saídas por mês"
-        subtitulo="Quanto cada um gastou em cada mês"
+        subtitulo={previsao ? 'Quanto cada um gastou e vai gastar em cada mês' : 'Quanto cada um gastou em cada mês'}
         dados={saidas}
         corDe={corDe}
       />
 
-      <Acumulado rows={rows} meses={meses} corDe={corDe} />
+      <Acumulado rows={base} meses={meses} futuro={futuro} corDe={corDe} />
     </div>
   );
 }
@@ -137,16 +190,42 @@ const VISOES = [
   { id: 'despesa', label: 'Saídas por pessoa' },
 ];
 
-function Acumulado({ rows, meses, corDe }) {
+function Acumulado({ rows, meses, futuro = 0, corDe }) {
   const [visao, setVisao] = useState('geral');
 
-  const geral = useMemo(() => acumuladoMensal(rows, meses), [rows, meses]);
-  const porPessoa = useMemo(
-    () => (visao === 'geral' ? null : acumuladoPorPessoa(rows, visao, meses)),
-    [rows, meses, visao]
+  const geral = useMemo(() => acumuladoMensal(rows, meses, futuro), [rows, meses, futuro]);
+  const porPessoaBruto = useMemo(
+    () => (visao === 'geral' ? null : acumuladoPorPessoa(rows, visao, meses, futuro)),
+    [rows, meses, futuro, visao]
   );
 
-  const ultimo = geral[geral.length - 1];
+  // Valores "até agora" (mês atual) e "previsto" (fim da janela).
+  const idxAtual = geral.reduce((idx, l, i) => (l.futuro ? idx : i), geral.length - 1);
+  const ultimo = geral[idxAtual];
+  const fimPrevisto = futuro ? geral[geral.length - 1] : null;
+  const porPessoa = useMemo(() => {
+    if (!porPessoaBruto) return null;
+    const atual = porPessoaBruto.serie[idxAtual] || {};
+    const total = porPessoaBruto.pessoas.reduce((s, n) => s + (atual[n] || 0), 0);
+    const fim = porPessoaBruto.serie[porPessoaBruto.serie.length - 1] || {};
+    return {
+      ...porPessoaBruto,
+      total,
+      totalPrevisto: porPessoaBruto.pessoas.reduce((s, n) => s + (fim[n] || 0), 0),
+      mix: porPessoaBruto.pessoas.map((nome) => ({
+        nome,
+        valor: atual[nome] || 0,
+        pct: total > 0 ? ((atual[nome] || 0) / total) * 100 : 0,
+      })),
+    };
+  }, [porPessoaBruto, idxAtual]);
+
+  const chaves = visao === 'geral' ? ['entradas', 'saidas'] : porPessoa?.pessoas || [];
+  const dadosGrafico = useMemo(() => {
+    const serie = visao === 'geral' ? geral : porPessoa?.serie || [];
+    return futuro ? separarPrevisao(serie, chaves) : serie;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geral, porPessoa, visao, futuro, chaves.join('|')]);
   const temDados =
     visao === 'geral'
       ? geral.some((m) => m.entradas > 0 || m.saidas > 0)
@@ -198,6 +277,11 @@ function Acumulado({ rows, meses, corDe }) {
               <span className="text-muted" style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>
                 guardado até agora
               </span>
+              {fimPrevisto && (
+                <span className="acumulado__previsto">
+                  previsto em {fimPrevisto.label}: <b>{fimPrevisto.saldo < 0 ? '−' : ''}{brl(Math.abs(fimPrevisto.saldo))}</b>
+                </span>
+              )}
             </div>
           )}
           {visao !== 'geral' && (
@@ -208,36 +292,46 @@ function Acumulado({ rows, meses, corDe }) {
               <span className="text-muted" style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>
                 {visao === 'receita' ? 'recebido no total' : 'gasto no total'}
               </span>
+              {futuro > 0 && (
+                <span className="acumulado__previsto">
+                  previsto em {dadosGrafico[dadosGrafico.length - 1]?.label}: <b>{brl(porPessoa.totalPrevisto)}</b>
+                </span>
+              )}
             </div>
           )}
 
           <ResponsiveContainer width="100%" height={220}>
             <LineChart
-              data={visao === 'geral' ? geral : porPessoa.serie}
+              data={dadosGrafico}
               margin={{ top: 6, right: 8, left: -6, bottom: 0 }}
             >
               <CartesianGrid vertical={false} stroke="var(--panel-border)" strokeDasharray="3 4" />
               <XAxis dataKey="label" {...EIXO_X} />
               <YAxis {...EIXO_Y} />
               <Tooltip content={<Dica />} cursor={{ stroke: 'var(--panel-border)' }} />
-              {visao === 'geral' ? (
-                <>
-                  <Line type="monotone" dataKey="entradas" name="Entrou" stroke="var(--good)" strokeWidth={2.4} dot={false} />
-                  <Line type="monotone" dataKey="saidas" name="Saiu" stroke="var(--danger)" strokeWidth={2.4} dot={false} />
-                </>
-              ) : (
-                porPessoa.pessoas.map((nome, i) => (
+              {(visao === 'geral'
+                ? [
+                    { k: 'entradas', nome: 'Entrou', cor: 'var(--good)' },
+                    { k: 'saidas', nome: 'Saiu', cor: 'var(--danger)' },
+                  ]
+                : porPessoa.pessoas.map((nome, i) => ({ k: nome, nome, cor: corDe(nome, i) }))
+              ).flatMap(({ k, nome, cor }) => [
+                <Line key={k} type="monotone" dataKey={k} name={nome} stroke={cor} strokeWidth={2.4} dot={false} connectNulls={false} />,
+                futuro > 0 && (
                   <Line
-                    key={nome}
+                    key={`${k}__prev`}
                     type="monotone"
-                    dataKey={nome}
+                    dataKey={`${k}__prev`}
                     name={nome}
-                    stroke={corDe(nome, i)}
-                    strokeWidth={2.4}
+                    stroke={cor}
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
                     dot={false}
+                    legendType="none"
+                    connectNulls={false}
                   />
-                ))
-              )}
+                ),
+              ])}
             </LineChart>
           </ResponsiveContainer>
 

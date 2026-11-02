@@ -8,6 +8,7 @@ import { previa } from '../utils/financiamento';
 import { useMembros } from '../hooks/useMembros';
 import { useCategories } from '../context/CategoriesContext';
 import CategoryPicker from './CategoryPicker';
+import Lixeira, { Desfazer, avisarLixeira } from './Lixeira';
 
 function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -48,6 +49,7 @@ export default function FinanciamentosTab({ onChanged }) {
   const [confirmando, setConfirmando] = useState(null);
   const [importando, setImportando] = useState(null); // id do cartão lendo o PDF
   const [aviso, setAviso] = useState('');
+  const [desfazer, setDesfazer] = useState(null);
 
   const carregar = useCallback(async () => {
     if (!filtroId) return;
@@ -91,9 +93,13 @@ export default function FinanciamentosTab({ onChanged }) {
 
   async function excluir(f) {
     try {
-      await excluirFinanciamento(filtroId, f.id);
+      const r = await excluirFinanciamento(filtroId, f.id);
       setConfirmando(null);
       setLista((l) => l.filter((x) => x.id !== f.id));
+      if (r?.lixeiraId) {
+        setDesfazer({ id: r.lixeiraId, texto: `${f.nome} excluído.` });
+        avisarLixeira();
+      }
     } catch (e) {
       setErro(e.message || 'Não foi possível excluir.');
     }
@@ -151,6 +157,28 @@ export default function FinanciamentosTab({ onChanged }) {
         );
       })}
 
+      <Lixeira
+        orcamentoId={filtroId}
+        soParcelas
+        onRestaurado={() => {
+          carregar();
+          onChanged?.();
+        }}
+      />
+
+      {desfazer && (
+        <Desfazer
+          texto={desfazer.texto}
+          orcamentoId={filtroId}
+          lixeiraId={desfazer.id}
+          onRestaurado={() => {
+            carregar();
+            onChanged?.();
+          }}
+          onFechar={() => setDesfazer(null)}
+        />
+      )}
+
       {abrindo === 'financiamento' && (
         <NovoFinanciamento
           orcamentoId={filtroId}
@@ -183,7 +211,7 @@ export default function FinanciamentosTab({ onChanged }) {
     return (
       <div className="confirmar-exclusao">
         <span className="confirmar-exclusao__pergunta">
-          Excluir {rotulo}? As parcelas futuras deixam de ser lançadas; o que já está em Gastos fica.
+          Excluir {rotulo}? As parcelas futuras deixam de ser lançadas; o que já está em Gastos fica. Dá para restaurar por 30 dias.
         </span>
         <div className="confirmar-exclusao__botoes">
           <button type="button" className="confirmar-exclusao__perigo" onClick={() => excluir(f)}>
