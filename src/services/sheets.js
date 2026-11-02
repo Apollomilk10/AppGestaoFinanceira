@@ -36,6 +36,8 @@ export async function fetchGastosDeOrcamento(orcamento) {
       valor: Number(row.valor) || 0,
       responsavel: (row.responsavel || '').toString().trim(),
       responsavelNome: (row.responsavelNome || row.responsavel || '').toString().trim(),
+      // undefined = servidor antigo, sem o campo (ver fetchGastosAgregados)
+      responsavelUid: row.responsavelUid === undefined ? undefined : row.responsavelUid || null,
       etapa: (row.etapa || 'Sem etapa').toString().trim(),
       tipo: row.tipo === 'receita' ? 'receita' : 'despesa',
       status: row.status === 'projetado' ? 'projetado' : 'confirmado',
@@ -47,10 +49,15 @@ export async function fetchGastosDeOrcamento(orcamento) {
 }
 
 /**
- * Busca os gastos de TODOS os orçamentos informados e junta tudo numa
- * lista só — é assim que "Meu espaço" mostra a visão combinada.
+ * "Meu espaço": junta os lançamentos de TODOS os orçamentos da pessoa, mas
+ * só os dela — o que está no nome dela em "Quem" (inclusive a parte dela
+ * nas parcelas divididas). O que é dos outros participantes fica de fora.
  */
-export async function fetchGastosAgregados(orcamentos) {
+export async function fetchGastosAgregados(orcamentos, uid) {
   const listas = await Promise.all(orcamentos.map(fetchGastosDeOrcamento));
-  return listas.flat();
+  const todos = listas.flat();
+  if (!uid) return todos;
+  return todos.filter((r) =>
+    r.responsavelUid === undefined ? r.responsavel === uid : r.responsavelUid === uid
+  );
 }

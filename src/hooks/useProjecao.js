@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOrcamentos } from '../context/OrcamentosContext';
+import { useAuth } from '../context/AuthContext';
 import { fetchRecorrentes } from '../services/recorrentes';
 import { fetchMembros } from '../services/orcamentos';
 import { gerarPrevistos } from '../utils/projecao';
@@ -11,6 +12,7 @@ import { gerarPrevistos } from '../utils/projecao';
  */
 export function useProjecao(ativo, meses = 12) {
   const { orcamentos, filtroId, isMeuEspaco } = useOrcamentos();
+  const { uid } = useAuth();
   const [dados, setDados] = useState({ recorrentes: [], membros: {} });
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
@@ -45,8 +47,13 @@ export function useProjecao(ativo, meses = 12) {
   }, [ativo, ids]);
 
   const previstos = useMemo(
-    () => (ativo ? gerarPrevistos(dados.recorrentes, dados.membros, meses) : []),
-    [ativo, dados, meses]
+    () => {
+      if (!ativo) return [];
+      const todos = gerarPrevistos(dados.recorrentes, dados.membros, meses);
+      // No "Meu espaço", só a minha parte do que vai cair.
+      return isMeuEspaco ? todos.filter((r) => r.responsavel === uid) : todos;
+    },
+    [ativo, dados, meses, isMeuEspaco, uid]
   );
 
   return { previstos, carregando, erro };

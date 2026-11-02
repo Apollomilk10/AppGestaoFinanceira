@@ -26,7 +26,7 @@ import PrimeiroEspaco from './components/PrimeiroEspaco';
 const REFRESH_MS = 60_000;
 
 export default function App() {
-  const { isAuthenticated, initializing, logout } = useAuth();
+  const { isAuthenticated, initializing, logout, uid } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const {
     orcamentos,
@@ -63,7 +63,7 @@ export default function App() {
     try {
       const data =
         isMeuEspaco
-          ? await fetchGastosAgregados(orcamentos)
+          ? await fetchGastosAgregados(orcamentos, uid)
           : await fetchGastosDeOrcamento(filtro || orcamentos.find((o) => o.id === filtroId));
       setRows(data);
       setStatus('ready');
@@ -80,7 +80,9 @@ export default function App() {
    * Depois disso, sincroniza com o servidor em segundo plano.
    */
   function addRowOptimista(row) {
-    setRows((prev) => [row, ...prev]);
+    // No "Meu espaço" só entra o que é meu.
+    if (isMeuEspaco && row.responsavel && row.responsavel !== uid) return;
+    setRows((prev) => [{ responsavelUid: row.responsavel || uid, ...row }, ...prev]);
     // Não recarrega do servidor aqui de propósito — a leitura por query do
     // Firestore pode demorar um instante pra refletir a escrita, e isso
     // sobrescrevia o lançamento recém-criado (mesma causa do bug de

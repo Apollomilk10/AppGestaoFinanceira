@@ -51,8 +51,17 @@ def _resolver_identidade(valor: str, uid_para_nome: dict, email_para_uid: dict):
 def _serializar(doc, uid_para_nome: dict, email_para_uid: dict) -> dict:
     data = doc.to_dict()
     responsavel = data.get("responsavel", "")
-    _, nome_resolvido = _resolver_identidade(responsavel, uid_para_nome, email_para_uid)
+    chave, nome_resolvido = _resolver_identidade(responsavel, uid_para_nome, email_para_uid)
+    # uid de quem é o lançamento ("Quem"): base do "Meu espaço", que soma só
+    # o que é da pessoa em todos os orçamentos. Sem "Quem", vale quem lançou.
+    if chave in uid_para_nome:
+        responsavel_uid = chave
+    elif not responsavel:
+        responsavel_uid = data.get("criadoPorUid")
+    else:
+        responsavel_uid = None
     return {
+        "responsavelUid": responsavel_uid,
         "id": doc.id,
         "data": data.get("data", ""),
         "categoria": data.get("categoria", "outro"),
