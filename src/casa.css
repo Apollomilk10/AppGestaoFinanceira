@@ -1262,3 +1262,30 @@
   padding: 5px 0;
   border-bottom: 1px solid var(--panel-border);
 }
+
+/* --- Financiamentos e parcelamentos --------------------------------- */
+.fin-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fin-acoes .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fin-grupo__titulo {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 18px 2px 8px;
+}
+
+.fin-grupo__titulo .text-muted {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}

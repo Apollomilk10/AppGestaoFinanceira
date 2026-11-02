@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, FileUp, Landmark, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, CreditCard, FileUp, Landmark, Plus, Trash2 } from 'lucide-react';
 import Spinner from './Spinner';
 import { useOrcamentos } from '../context/OrcamentosContext';
 import { atualizarCronograma, criarFinanciamento, excluirFinanciamento, fetchFinanciamentos } from '../services/financiamentos';
 import { lerPdfDDC } from '../utils/ddcParser';
 import { previa } from '../utils/financiamento';
 import { useMembros } from '../hooks/useMembros';
+import { useCategories } from '../context/CategoriesContext';
+import CategoryPicker from './CategoryPicker';
 
 function brl(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -23,16 +25,26 @@ const FORM_VAZIO = {
   valorParcela: '',
 };
 
+function mesAno(aaaamm) {
+  if (!aaaamm) return '—';
+  const [a, m] = aaaamm.split('-').map(Number);
+  const txt = new Date(a, m - 1, 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+  return txt.replace('.', '').replace(' de ', '/');
+}
+
 /**
- * Financiamentos: cadastra o contrato (valor, juros, prazo) e gera a conta
- * recorrente que lança a parcela todo mês na aba Gastos.
+ * Financiamentos e parcelamentos: o contrato do imóvel (valor, juros, prazo
+ * ou as parcelas exatas do banco) e as compras/dívidas parceladas de cada
+ * um. Tudo vira conta recorrente que lança a parcela do mês na aba Gastos.
  */
 export default function FinanciamentosTab({ onChanged }) {
   const { filtroId } = useOrcamentos();
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
-  const [abrindo, setAbrindo] = useState(false);
+  const [abrindo, setAbrindo] = useState(null); // null | 'financiamento' | 'parcelamento'
+  const { membros } = useMembros(filtroId);
+  const { getCategoryMeta } = useCategories();
   const [confirmando, setConfirmando] = useState(null);
   const [importando, setImportando] = useState(null); // id do cartão lendo o PDF
   const [aviso, setAviso] = useState('');
@@ -90,14 +102,20 @@ export default function FinanciamentosTab({ onChanged }) {
   return (
     <div className="tab-content">
       <section className="secao">
-        <h2 className="secao__titulo">Financiamentos</h2>
+        <h2 className="secao__titulo">Financiamentos e parcelamentos</h2>
         <p className="text-muted" style={{ fontSize: 13, margin: '0 0 12px' }}>
-          A parcela vira um gasto recorrente: todo mês ela entra sozinha na aba Gastos.
+          Cada parcela vira um gasto recorrente: todo mês ela entra sozinha na aba Gastos, até acabar.
         </p>
-        <button type="button" className="primary-button primary-button--full" onClick={() => setAbrindo(true)}>
-          <Plus size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} />
-          Novo financiamento
-        </button>
+        <div className="fin-acoes">
+          <button type="button" className="primary-button" onClick={() => setAbrindo('financiamento')}>
+            <Plus size={16} />
+            Financiamento
+          </button>
+          <button type="button" className="primary-button" onClick={() => setAbrindo('parcelamento')}>
+            <Plus size={16} />
+            Parcelamento
+          </button>
+        </div>
       </section>
 
       {erro && <p className="field-error">{erro}</p>}
@@ -112,12 +130,116 @@ export default function FinanciamentosTab({ onChanged }) {
       {!carregando && lista.length === 0 && !erro && (
         <section className="secao">
           <p className="text-muted" style={{ textAlign: 'center', padding: '20px 8px' }}>
-            Nenhum financiamento ainda. Cadastre o do seu imóvel e acompanhe parcelas, saldo devedor e quanto falta pagar.
+            Nada por aqui ainda. Cadastre o financiamento do imóvel ou um parcelamento (uma compra no cartão, um empréstimo, um acordo de dívida) e acompanhe quanto falta pagar.
           </p>
         </section>
       )}
 
-      {lista.map((f) => {
+      {[
+        ['financiamento', 'Financiamentos'],
+        ['parcelamento', 'Parcelamentos'],
+      ].map(([tipo, titulo]) => {
+        const itens = lista.filter((f) => (f.tipo || 'financiamento') === tipo);
+        if (itens.length === 0) return null;
+        return (
+          <div key={tipo} className="fin-grupo">
+            <h3 className="fin-grupo__titulo">
+              {titulo} <span className="text-muted">· {brl(itens.reduce((t, f) => t + (f.ativo ? f.proximaParcela : 0), 0))}/mês</span>
+            </h3>
+            {itens.map((f) => (tipo === 'parcelamento' ? renderParcelamento(f) : renderFinanciamento(f)))}
+          </div>
+        );
+      })}
+
+      {abrindo === 'financiamento' && (
+        <NovoFinanciamento
+          orcamentoId={filtroId}
+          onClose={() => setAbrindo(null)}
+          onSaved={() => {
+            setAbrindo(null);
+            carregar();
+            onChanged?.();
+          }}
+        />
+      )}
+
+      {abrindo === 'parcelamento' && (
+        <NovoParcelamento
+          membros={membros}
+          orcamentoId={filtroId}
+          onClose={() => setAbrindo(null)}
+          onSaved={() => {
+            setAbrindo(null);
+            carregar();
+            onChanged?.();
+          }}
+        />
+      )}
+    </div>
+  );
+
+  function confirmacao(f, rotulo) {
+    if (confirmando !== f.id) return null;
+    return (
+      <div className="confirmar-exclusao">
+        <span className="confirmar-exclusao__pergunta">
+          Excluir {rotulo}? As parcelas futuras deixam de ser lançadas; o que já está em Gastos fica.
+        </span>
+        <div className="confirmar-exclusao__botoes">
+          <button type="button" className="confirmar-exclusao__perigo" onClick={() => excluir(f)}>
+            Excluir
+          </button>
+          <button type="button" onClick={() => setConfirmando(null)}>Cancelar</button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderParcelamento(f) {
+    const pct = Math.min(100, (f.parcelasPagas / f.prazoMeses) * 100);
+    const quem = f.responsavelUid
+      ? membros.find((m) => m.uid === f.responsavelUid)?.nome || 'integrante'
+      : 'dividido entre vocês';
+    const cat = getCategoryMeta(f.categoria || 'outro');
+    return (
+      <section key={f.id} className="secao fin-card">
+        <div className="fin-card__topo">
+          <span className="fin-card__icone"><CreditCard size={18} /></span>
+          <div className="fin-card__titulo">
+            <strong>{f.nome}</strong>
+            <span className="text-muted">
+              {cat.label} · vence dia {f.diaVencimento} · {quem}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={`Excluir ${f.nome}`}
+            onClick={() => setConfirmando(confirmando === f.id ? null : f.id)}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+        <div className="fin-card__progresso" role="img" aria-label={`${pct.toFixed(0)}% das parcelas lançadas`}>
+          <div style={{ width: `${pct}%` }} />
+        </div>
+        <div className="fin-card__legenda text-muted">
+          <span>{f.parcelasPagas} de {f.prazoMeses} parcelas</span>
+          <span>termina em {mesAno(f.terminaEm)}</span>
+        </div>
+        <div className="fin-card__grade">
+          <div><span>Parcela</span><b>{brl(f.valorParcela || f.proximaParcela)}</b></div>
+          <div><span>Falta pagar</span><b>{brl(f.totalRestante)}</b></div>
+        </div>
+        {!f.ativo && f.parcelasRestantes === 0 && (
+          <p className="text-good" style={{ fontSize: 13, marginTop: 8 }}>Quitado 🎉</p>
+        )}
+        {confirmacao(f, 'este parcelamento')}
+      </section>
+    );
+  }
+
+  function renderFinanciamento(f) {
         const pct = Math.min(100, (f.parcelasPagas / f.prazoMeses) * 100);
         const pedindo = confirmando === f.id;
         return (
@@ -146,7 +268,7 @@ export default function FinanciamentosTab({ onChanged }) {
             </div>
             <div className="fin-card__legenda text-muted">
               <span>{f.parcelasPagas} de {f.prazoMeses} parcelas</span>
-              <span>{f.parcelasRestantes} restantes</span>
+              <span>{f.parcelasRestantes} restantes · até {mesAno(f.terminaEm)}</span>
             </div>
 
             <div className="fin-card__grade">
@@ -190,37 +312,10 @@ export default function FinanciamentosTab({ onChanged }) {
               <p className="text-good" style={{ fontSize: 13, marginTop: 8 }}>Quitado 🎉</p>
             )}
 
-            {pedindo && (
-              <div className="confirmar-exclusao">
-                <span className="confirmar-exclusao__pergunta">
-                  Excluir este financiamento? As parcelas futuras deixam de ser lançadas; o que já está em Gastos fica.
-                </span>
-                <div className="confirmar-exclusao__botoes">
-                  <button type="button" className="confirmar-exclusao__perigo" onClick={() => excluir(f)}>
-                    Excluir
-                  </button>
-                  <button type="button" onClick={() => setConfirmando(null)}>Cancelar</button>
-                </div>
-              </div>
-            )}
+            {pedindo && confirmacao(f, 'este financiamento')}
           </section>
         );
-      })}
-
-      {abrindo && (
-        <NovoFinanciamento
-          orcamentoId={filtroId}
-          onClose={() => setAbrindo(false)}
-          onSaved={() => {
-            setAbrindo(false);
-            carregar();
-            // a primeira parcela é lançada ao recarregar os gastos
-            onChanged?.();
-          }}
-        />
-      )}
-    </div>
-  );
+  }
 }
 
 function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
@@ -468,6 +563,143 @@ function NovoFinanciamento({ orcamentoId, onClose, onSaved }) {
 
         <button type="submit" className="primary-button primary-button--full" disabled={salvando}>
           {salvando ? 'salvando…' : 'salvar e gerar gasto recorrente'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function NovoParcelamento({ membros, orcamentoId, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    nome: '',
+    valorParcela: '',
+    prazoMeses: '',
+    parcelasPagas: '0',
+    diaVencimento: String(Math.min(new Date().getDate(), 28)),
+    categoria: 'outro',
+    responsavelUid: '',
+  });
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  const parcela = Number(form.valorParcela) || 0;
+  const prazo = Number(form.prazoMeses) || 0;
+  const pagas = Number(form.parcelasPagas) || 0;
+  const restantes = Math.max(0, prazo - pagas);
+  const valido = form.nome.trim() && parcela > 0 && prazo >= 1 && pagas >= 0 && pagas < prazo;
+
+  async function salvar(e) {
+    e.preventDefault();
+    if (!valido) {
+      setErro('Preencha descrição, valor da parcela e número de parcelas (as já pagas precisam ser menos que o total).');
+      return;
+    }
+    setSalvando(true);
+    setErro('');
+    try {
+      await criarFinanciamento(orcamentoId, {
+        tipo: 'parcelamento',
+        nome: form.nome.trim(),
+        valorFinanciado: parcela * prazo,
+        valorParcela: parcela,
+        prazoMeses: prazo,
+        parcelasPagas: pagas,
+        diaVencimento: Number(form.diaVencimento) || 5,
+        categoria: form.categoria,
+        responsavelUid: form.responsavelUid || null,
+      });
+      onSaved();
+    } catch (err) {
+      setErro(err.message || 'Não foi possível salvar.');
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <form className="sheet" onClick={(e) => e.stopPropagation()} onSubmit={salvar}>
+        <div className="sheet__header">
+          <h2>Novo parcelamento</h2>
+          <button type="button" className="link-button mono" onClick={onClose}>fechar</button>
+        </div>
+
+        <label className="field">
+          <span>O que é</span>
+          <input
+            type="text" autoFocus value={form.nome} onChange={(e) => set('nome', e.target.value)}
+            placeholder="ex: geladeira, empréstimo, acordo do cartão"
+          />
+        </label>
+
+        <div className="fin-duo">
+          <label className="field">
+            <span>Valor da parcela</span>
+            <div className="field__prefix">
+              <span className="mono">R$</span>
+              <input
+                type="number" inputMode="decimal" min="0" step="0.01" required
+                value={form.valorParcela} onChange={(e) => set('valorParcela', e.target.value)} placeholder="0,00"
+              />
+            </div>
+          </label>
+          <label className="field">
+            <span>Nº de parcelas</span>
+            <input
+              type="number" inputMode="numeric" min="1" max="480" required
+              value={form.prazoMeses} onChange={(e) => set('prazoMeses', e.target.value)} placeholder="ex: 10"
+            />
+          </label>
+        </div>
+
+        <div className="fin-duo">
+          <label className="field">
+            <span>Já pagas</span>
+            <input
+              type="number" inputMode="numeric" min="0"
+              value={form.parcelasPagas} onChange={(e) => set('parcelasPagas', e.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Vence todo dia</span>
+            <input
+              type="number" inputMode="numeric" min="1" max="28"
+              value={form.diaVencimento} onChange={(e) => set('diaVencimento', e.target.value)}
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>Quem paga</span>
+          <select value={form.responsavelUid} onChange={(e) => set('responsavelUid', e.target.value)}>
+            <option value="">Dividir pela parte de cada um</option>
+            {membros.map((m) => (
+              <option key={m.uid} value={m.uid}>{m.nome}</option>
+            ))}
+          </select>
+        </label>
+
+        <div className="field">
+          <span>Categoria</span>
+          <CategoryPicker value={form.categoria} onChange={(v) => set('categoria', v)} />
+        </div>
+
+        {parcela > 0 && prazo > 0 && (
+          <div className="fin-previa">
+            <div><span className="text-muted">Total da compra/dívida</span><b>{brl(parcela * prazo)}</b></div>
+            <div><span className="text-muted">Falta pagar ({restantes}x)</span><b>{brl(parcela * restantes)}</b></div>
+          </div>
+        )}
+        <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>
+          A parcela entra em Gastos todo dia {form.diaVencimento || '…'}
+          {restantes ? `, pelas ${restantes} parcelas que faltam, e para sozinha no fim` : ''}.
+          {!form.responsavelUid && ' Sem um responsável, ela é dividida pela parte de cada integrante (Integrantes → Parte).'}
+        </p>
+
+        {erro && <p className="field-error">{erro}</p>}
+
+        <button type="submit" className="primary-button primary-button--full" disabled={salvando}>
+          {salvando ? 'salvando…' : 'salvar parcelamento'}
         </button>
       </form>
     </div>

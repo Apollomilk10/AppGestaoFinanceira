@@ -9,7 +9,7 @@ const TABS = [
   { id: 'overview', label: 'Início', icon: Home },
   { id: 'insights', label: 'Relatórios', icon: BarChart3 },
   { id: 'transactions', label: 'Gastos', icon: Receipt },
-  { id: 'financiamentos', label: 'Financiamentos', icon: Landmark },
+  { id: 'financiamentos', label: 'Parcelas', icon: Landmark },
 ];
 
 export default function TabBar({ active, onChange }) {

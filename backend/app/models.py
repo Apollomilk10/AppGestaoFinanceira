@@ -110,3 +110,6 @@ class FinanciamentoInput(BaseModel):
     seguroMensal: float = 0  # seguros e tarifas somados a cada parcela
     valorParcela: Optional[float] = None  # se já souber a parcela, vale esta (constante)
     cronograma: Optional[list[ParcelaExata]] = None  # parcelas exatas do banco (vale sobre o cálculo)
+    tipo: str = "financiamento"  # financiamento | parcelamento (compra/dívida parcelada)
+    categoria: Optional[str] = None
+    responsavelUid: Optional[str] = None  # quem paga; vazio = divide pela parte de cada um

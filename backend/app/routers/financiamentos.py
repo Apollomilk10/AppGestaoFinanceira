@@ -3,12 +3,27 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import get_current_user
-from ..data import exigir_membro
+from ..data import exigir_membro, membro_doc_id
 from ..financiamento import resumo, normalizar_cronograma, situacao_cronograma
 from ..firebase import db
 from ..models import FinanciamentoInput, CronogramaInput
 
 router = APIRouter(tags=["financiamentos"])
+
+
+def _preparar_parcelamento(b: FinanciamentoInput) -> None:
+    """Parcelamento (compra ou dívida): parcela fixa, sem juros a calcular.
+    O "valor financiado" vira o total das parcelas, para reaproveitar as contas."""
+    if b.tipo != "parcelamento":
+        b.tipo = "financiamento"
+        return
+    if not b.valorParcela or b.valorParcela <= 0:
+        raise HTTPException(status_code=400, detail="Informe o valor da parcela.")
+    b.cronograma = None
+    b.taxaAnual = 0
+    b.sistema = "price"
+    b.seguroMensal = 0
+    b.valorFinanciado = round(b.valorParcela * max(b.prazoMeses, 1), 2)
 
 
 def _validar(b: FinanciamentoInput) -> None:
@@ -63,6 +78,20 @@ def _campos_cronograma(crono: list) -> dict:
     }
 
 
+def _termina_em(crono, rd: dict, restantes: int):
+    """Mês (AAAA-MM) da última parcela."""
+    if crono:
+        return crono[-1]["d"][:7]
+    if restantes <= 0:
+        return rd.get("ultimoMesGerado") or None
+    hoje = datetime.now(timezone.utc)
+    mes_atual = hoje.strftime("%Y-%m")
+    # a parcela deste mês ainda vai ser lançada, se não foi
+    inicio = hoje.year * 12 + hoje.month - 1 + (1 if rd.get("ultimoMesGerado") == mes_atual else 0)
+    fim = inicio + restantes - 1
+    return f"{fim // 12:04d}-{fim % 12 + 1:02d}"
+
+
 def _situacao(d: dict, geradas: int, ativo: bool) -> dict:
     """Quanto falta, em cima do que já foi lançado até agora."""
     pagas = min(d["prazoMeses"], d.get("parcelasPagas", 0) + geradas)
@@ -97,6 +126,7 @@ async def listar_financiamentos(orcamento_id: str, user: dict = Depends(get_curr
                         "ativo": rd.get("ativo", False), "exato": True}
         else:
             situacao = _situacao(d, rd.get("vezesGeradas", 0), rd.get("ativo", False))
+        situacao["terminaEm"] = _termina_em(crono, rd, situacao["parcelasRestantes"])
         rows.append({
             "id": doc.id,
             "nome": d.get("nome", ""),
@@ -107,6 +137,9 @@ async def listar_financiamentos(orcamento_id: str, user: dict = Depends(get_curr
             "diaVencimento": d.get("diaVencimento", 5),
             "seguroMensal": d.get("seguroMensal", 0),
             "valorParcela": d.get("valorParcela"),
+            "tipo": d.get("tipo", "financiamento"),
+            "categoria": d.get("categoria"),
+            "responsavelUid": d.get("responsavelUid"),
             **situacao,
         })
     rows.sort(key=lambda r: r["nome"].lower())
@@ -118,6 +151,11 @@ async def criar_financiamento(orcamento_id: str, body: FinanciamentoInput, user:
     """Cadastra o financiamento e já cria a conta recorrente parcelada que
     lança a parcela de cada mês (valores variáveis no caso do SAC)."""
     await exigir_membro(orcamento_id, user["uid"])
+    _preparar_parcelamento(body)
+    if body.responsavelUid:
+        membro = db.collection("membros").document(membro_doc_id(orcamento_id, body.responsavelUid)).get()
+        if not membro.exists:
+            raise HTTPException(status_code=400, detail="Quem paga precisa ser integrante do orçamento.")
     crono = None
     if body.cronograma:
         crono = _aplicar_cronograma(body)
@@ -140,10 +178,11 @@ async def criar_financiamento(orcamento_id: str, body: FinanciamentoInput, user:
         "valor": valor,
         "valores": valores,
         **(_campos_cronograma(crono) if crono else {}),
-        "categoria": "moradia",
+        "categoria": body.categoria or ("moradia" if body.tipo == "financiamento" else "outro"),
         "etapa": "nao_especificada",
         "tipo": "despesa",
         "diaDoMes": body.diaVencimento,
+        "responsavelUid": body.responsavelUid,
         "ativo": True,
         "parcelas": restantes,
         "parcelaInicial": body.parcelasPagas + 1,
@@ -167,6 +206,9 @@ async def criar_financiamento(orcamento_id: str, body: FinanciamentoInput, user:
         "seguroMensal": body.seguroMensal,
         "valorParcela": body.valorParcela,
         "exato": bool(crono),
+        "tipo": body.tipo,
+        "categoria": body.categoria,
+        "responsavelUid": body.responsavelUid,
         "recorrenteId": rec_ref.id,
         "criadoPorUid": user["uid"],
         "criadoEm": agora,

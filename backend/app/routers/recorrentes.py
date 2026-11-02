@@ -181,7 +181,10 @@ async def processar_recorrentes(orcamento_id: str, user: dict = Depends(get_curr
         # Parcela de financiamento: um lançamento por integrante, na
         # proporção definida no orçamento. Sem percentuais, um só.
         partes = []
-        if data.get("financiamentoId"):
+        if data.get("responsavelUid"):
+            # parcelamento com dono: lança tudo para quem paga
+            partes = [(data["responsavelUid"], valor_parcela)]
+        elif data.get("financiamentoId"):
             if percentuais is None:
                 percentuais = {
                     m.to_dict().get("uid"): m.to_dict().get("percentual")
